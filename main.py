@@ -1,9 +1,11 @@
+import os
 import re
 
 import requests
 import json
 import boto3
-metadata_api = 'https://mvxwmcrn5m.execute-api.eu-west-1.amazonaws.com/dev'
+metadata_api = os.environ['METADATA_API_URL']
+bucket = 'ok-origo-dataplatform-{}'.format(os.environ['STAGE'])
 
 def latest_edition(event, context):
     def gen_lists():
@@ -19,7 +21,6 @@ def latest_edition(event, context):
     session = boto3.Session()
     s3 = session.client('s3')
 
-    bucket = 'ok-origo-dataplatform-dev'
 
     dataset = event['pathParameters']['dataset']
     query = []

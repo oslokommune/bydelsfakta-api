@@ -1,0 +1,18 @@
+get_dataset: "Fetch the dataset from s3 storage"
+description: "Requires datasetID"
+pathParams:
+  - name: dataset
+    description: dataset key to get
+queryParams:
+  - name: geography
+    description: Filter for geography
+    type: array
+    items:
+      type: string
+methodResponses:
+  - statusCode: "200"
+    responseModels:
+      "application/json": "Response"
+  - statusCode: "400"
+    responseModels:
+      "application/json": "awsError"

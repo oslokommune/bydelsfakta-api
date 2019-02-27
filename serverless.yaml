@@ -1,0 +1,42 @@
+service: bydelsfakta-api
+
+provider:
+  name: aws
+  runtime: python3.7
+  region: ${opt:region, 'eu-west-1'}
+  stage: ${opt:stage, 'dev'}
+  deploymentBucket:
+    name: ok-origo-dataplatform-config-${self:provider.stage}
+    serverSideEncryption: AES256
+  deploymentPrefix: deploy
+  iamManagedPolicies:
+    - Fn::Join:
+      - ':'
+      - - 'arn:aws:iam:'
+        - 'aws'
+        - 'policy/AmazonS3ReadOnlyAccess'
+plugins:
+  - serverless-aws-documentation
+  - serverless-python-requirements
+package:
+  exclude:
+    - "./**"
+  include:
+    - main.py
+
+functions:
+  get_dataset: ${file(serverless/functions/get_dataset.yaml)}
+
+custom:
+  documentation:
+    title: ${self:service}
+    version: 0.1.1
+    summary: ${self:service} API
+    description: Fetch bydelsfakta.
+    models:
+      - ${file(./serverless/models/Response.yaml)}
+      - ${file(./serverless/models/awsError.yaml)}
+  pythonRequirements:
+    dockerizePip: non-linux
+    layer: true
+    slim: true

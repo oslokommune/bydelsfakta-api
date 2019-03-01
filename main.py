@@ -20,6 +20,7 @@ def latest_edition(event, context):
         }
 
     def gen_lists():
+        keys = []
         if not query:
             keys = [
                 obj["Key"]

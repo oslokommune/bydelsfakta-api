@@ -10,29 +10,33 @@ bucket = "ok-origo-dataplatform-{}".format(os.environ["STAGE"])
 
 
 def latest_edition(event, context):
+    if (
+        not event["requestContext"]["authorizer"]["principalId"]
+        == "service-account-bydelsfakta-frontend"
+    ):
+        return {
+            "statusCode": 403,
+            "body": "Forbidden: Only bydelsfakta frontend is allowed to use this api",
+        }
+
     def gen_lists():
         if not query:
-            objects = s3.list_objects_v2(Bucket=bucket, Prefix=base_key)["Contents"]
-            return [
-                json.loads(
-                    s3.get_object(Bucket=bucket, Key=obj["Key"])["Body"]
-                    .read()
-                    .decode("utf-8")
-                )
-                for obj in objects
+            keys = [
+                obj["Key"]
+                for obj in s3.list_objects_v2(Bucket=bucket, Prefix=base_key)[
+                    "Contents"
+                ]
             ]
+        else:
+            pattern = re.compile("(\d\d)")
+            numbers = pattern.findall(query)
+            keys = ["{}{}.json".format(base_key, geography) for geography in numbers]
 
-        pattern = re.compile("(\d\d)")
-        numbers = pattern.findall(query)
         return [
             json.loads(
-                s3.get_object(
-                    Bucket=bucket, Key="{}{}.json".format(base_key, geography)
-                )["Body"]
-                .read()
-                .decode("utf-8")
+                s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")
             )
-            for geography in numbers
+            for key in keys
         ]
 
     session = boto3.Session()

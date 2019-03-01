@@ -106,6 +106,7 @@ event = {
     },
     "requestContext": {
         "accountId": "123456789012",
+        "authorizer": {"principalId": "service-account-bydelsfakta-frontend"},
         "resourceId": "123456",
         "stage": "prod",
         "requestId": "c6af9ac6-7b61-11e6-9a41-93e8deadbeef",

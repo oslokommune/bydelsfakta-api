@@ -16,8 +16,8 @@ provider:
     - Fn::Join:
       - ':'
       - - 'arn:aws:iam:'
-        - 'aws'
-        - 'policy/AmazonS3ReadOnlyAccess'
+        - Ref: AWS::AccountId
+        - 'policy/bydelsfakta-api-policy'
 plugins:
   - serverless-aws-documentation
   - serverless-python-requirements

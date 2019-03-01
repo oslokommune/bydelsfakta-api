@@ -2,9 +2,4 @@ name: awsError
 description: An error response
 contentType: application/json
 schema:
-  type: object
-  required:
-    - statusCode
-  properties:
-    statusCode:
-      type: number
+  type: string

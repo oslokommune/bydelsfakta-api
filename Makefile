@@ -5,10 +5,13 @@ init:
 
 .PHONY: format
 format: init
-	python3 -m black main.py test_main.py setup.py
+	python3 -m black main.py test_main.py setup.py --line-length 160
+
+.PHONY: test
+test: init
+	python3 -m tox -p auto
 
 .PHONY: deploy
-deploy: format
-	python3 -m tox -p auto && \
+deploy: test
 	sls deploy && \
 	sls downloadDocumentation --outputFileName swagger.yaml

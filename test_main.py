@@ -12,13 +12,7 @@ os.environ["METADATA_API_URL"] = m_url
 os.environ["STAGE"] = stage
 import main
 
-version_metadata = [
-    {
-        "datasetID": "boligpriser_historic-4owcY",
-        "version": "1",
-        "versionID": "1-zV86jpeY",
-    }
-]
+version_metadata = [{"datasetID": "boligpriser_historic-4owcY", "version": "1", "versionID": "1-zV86jpeY"}]
 edition_metadata = [
     {
         "datasetID": "boligpriser_historic-4owcY",
@@ -38,26 +32,15 @@ class Test:
     def test_main_handler(self, requests_mock, s3_client, s3_bucket):
         for i in range(0, 19):
             s3_client.put_object(
-                Bucket=s3_bucket,
-                Key="{}{}.json".format(
-                    urllib.parse.unquote_plus(self.base_key), f"{i:02}"
-                ),
-                Body=json.dumps({"number": f"{i:02}"}),
+                Bucket=s3_bucket, Key="{}{}.json".format(urllib.parse.unquote_plus(self.base_key), f"{i:02}"), Body=json.dumps({"number": f"{i:02}"})
             )
 
+        requests_mock.get(m_url + "/datasets/boligpriser_historic-4owcY/versions", text=json.dumps(version_metadata))
         requests_mock.get(
-            m_url + "/datasets/boligpriser_historic-4owcY/versions",
-            text=json.dumps(version_metadata),
-        )
-        requests_mock.get(
-            m_url
-            + "/datasets/boligpriser_historic-4owcY/versions/{}/editions".format(
-                version_metadata[0]["versionID"]
-            ),
-            text=json.dumps(edition_metadata),
+            m_url + "/datasets/boligpriser_historic-4owcY/versions/{}/editions".format(version_metadata[0]["versionID"]), text=json.dumps(edition_metadata)
         )
 
-        result = main.latest_edition(event, {})
+        result = main.get_latest_edition(event, {})
         assert result["statusCode"] == 200
         assert json.loads(result["body"])[1] == {"number": "08"}
 

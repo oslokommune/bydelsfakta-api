@@ -1,0 +1,70 @@
+---
+swagger: "2.0"
+info:
+  version: "2019-03-01T15:00:07Z"
+  title: "dev-bydelsfakta-api"
+host: "bwv5c8snqk.execute-api.eu-west-1.amazonaws.com"
+basePath: "/dev"
+schemes:
+- "https"
+paths:
+  /{dataset}:
+    get:
+      description: "Requires datasetID"
+      produces:
+      - "application/json"
+      parameters:
+      - name: "dataset"
+        in: "path"
+        description: "dataset key to get"
+        required: true
+        type: "string"
+      - name: "geography"
+        in: "query"
+        description: "Filter for geography"
+        required: false
+        type: "string"
+      responses:
+        200:
+          description: "200 response"
+          schema:
+            $ref: "#/definitions/Response"
+        400:
+          description: "400 response"
+          schema:
+            $ref: "#/definitions/awsError"
+      security:
+      - authenticate: []
+    options:
+      consumes:
+      - "application/json"
+      produces:
+      - "application/json"
+      responses:
+        200:
+          description: "200 response"
+          headers:
+            Access-Control-Allow-Origin:
+              type: "string"
+            Access-Control-Allow-Methods:
+              type: "string"
+            Access-Control-Allow-Credentials:
+              type: "string"
+            Access-Control-Allow-Headers:
+              type: "string"
+securityDefinitions:
+  authenticate:
+    type: "apiKey"
+    name: "Authorization"
+    in: "header"
+    x-amazon-apigateway-authtype: "custom"
+definitions:
+  Response:
+    type: "array"
+    description: "A response containing json data"
+    items:
+      type: "object"
+      properties: {}
+  awsError:
+    type: "string"
+    description: "An error response"

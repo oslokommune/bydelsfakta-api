@@ -1,0 +1,18 @@
+handler: main.get_latest_edition
+layers:
+  - { Ref: PythonRequirementsLambdaLayer }
+environment:
+  STAGE: ${self:provider.stage}
+events:
+- http:
+    path: /{dataset}
+    method: get
+    cors: true
+    request:
+      parameters:
+        querystrings:
+          geography: false
+        paths:
+          dataset: true
+    documentation: ${file(serverless/documentation/get_dataset.yaml)}
+    authorizer: ${file(serverless/kc-authorizer.yaml)}

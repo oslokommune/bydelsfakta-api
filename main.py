@@ -15,8 +15,8 @@ def get_latest_edition(event, context):
 
     def gen_lists():
         keys = []
-        objects = s3.list_objects_v2(Bucket=bucket, Prefix=base_key)["Contents"]
         if not query:
+            objects = s3.list_objects_v2(Bucket=bucket, Prefix=base_key)["Contents"]
             keys = [obj["Key"] for obj in objects]
         else:
             pattern = re.compile("(\d\d)")

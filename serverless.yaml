@@ -21,6 +21,7 @@ provider:
 plugins:
   - serverless-aws-documentation
   - serverless-python-requirements
+  - serverless-pseudo-parameters
 package:
   exclude:
     - "./**"

@@ -13,5 +13,9 @@ test: init
 
 .PHONY: deploy
 deploy: test
-	sls deploy && \
-	sls downloadDocumentation --outputFileName swagger.yaml
+	sls deploy
+
+.PHONY: deploy-prod
+deploy-prod: test
+	sls deploy --stage prod && \
+	sls downloadDocumentation --outputFileName swagger.yaml --stage prod

@@ -1,10 +1,10 @@
 ---
 swagger: "2.0"
 info:
-  version: "2019-03-01T15:00:07Z"
-  title: "dev-bydelsfakta-api"
-host: "bwv5c8snqk.execute-api.eu-west-1.amazonaws.com"
-basePath: "/dev"
+  version: "2019-03-11T12:19:47Z"
+  title: "prod-bydelsfakta-api"
+host: "6aa43ueckj.execute-api.eu-west-1.amazonaws.com"
+basePath: "/prod"
 schemes:
 - "https"
 paths:

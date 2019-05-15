@@ -35,14 +35,16 @@ def get_latest_edition(event, context):
 
     all_versions = requests.get(f"{metadata_api}/datasets/{dataset}/versions")
     versions = json.loads(all_versions.text)
-    latest_version = max(versions, key=lambda x: x["version"] if "version" in x else -1)["versionID"]
+    latest_version = max(versions, key=lambda x: x["version"] if "version" in x else -1)
+    version_name = latest_version.get("versionID", latest_version["version"])
 
-    all_editions = requests.get(f"{metadata_api}/datasets/{dataset}/versions/{latest_version}/editions")
+    all_editions = requests.get(f"{metadata_api}/datasets/{dataset}/versions/{version_name}/editions")
 
     editions = json.loads(all_editions.text)
-    latest_edition = max(editions, key=lambda x: x["edition"] if "edition" in x else -1)["editionID"]
+    latest_edition = max(editions, key=lambda x: x["edition"] if "edition" in x else -1)
+    edition_name = latest_edition.get("editionID", latest_edition["edition"])
 
-    base_key = f"processed/green/{dataset}/version={latest_version}/edition={latest_edition}/"
+    base_key = f"processed/green/{dataset}/version={version_name}/edition={edition_name}/"
 
     data = gen_lists()
 

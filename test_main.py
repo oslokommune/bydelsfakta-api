@@ -12,34 +12,41 @@ os.environ["METADATA_API_URL"] = m_url
 os.environ["STAGE"] = stage
 import main
 
-version_metadata = [{"datasetID": "boligpriser_historic-4owcY", "version": "1", "versionID": "1-zV86jpeY"}]
+version_metadata = [{"Id": "boligpriser_historic-4owcY/1", "version": "1", }]
 edition_metadata = [
     {
-        "datasetID": "boligpriser_historic-4owcY",
-        "description": "Manually uploaded file",
-        "edition": 1_551_107_009,
-        "editionID": "EDITION-HAkZy",
+        "Id": "boligpriser_historic-4owcY/1/20190529T113052",
+        "description": "Latest Edition",
+        "edition": "2019-05-29T13:30:52+02:00",
         "endTime": "2017-12-31T23:00:00+01:00",
         "startTime": "2004-01-01T00:00:00+01:00",
-        "versionID": "1-zV86jpeY",
+    },
+    {
+        "description": "Old Edition",
+        "edition": "2019-04-29T13:30:52+02:00",
+        "Id": "boligpriser_historic-4owcY/1/20190429T113052",
+        "endTime": "2017-12-31T23:00:00+01:00",
+        "startTime": "2004-01-01T00:00:00+01:00",
     }
 ]
 
 
 class Test:
-    base_key = "processed/green/boligpriser_historic-4owcY/version%3D1-zV86jpeY/edition%3DEDITION-HAkZy/"
+    base_key = "processed/green/boligpriser_historic-4owcY/version%3D1/edition%3D20190529T113052/"
 
     def test_main_handler(self, requests_mock, s3_client, s3_bucket):
         for i in range(0, 19):
+            prefix = urllib.parse.unquote_plus(self.base_key)
+            file_numer = str(i).zfill(2)
+            print(f"{prefix}{file_numer}.json")
             s3_client.put_object(
-                Bucket=s3_bucket, Key="{}{}.json".format(urllib.parse.unquote_plus(self.base_key), f"{i:02}"), Body=json.dumps({"number": f"{i:02}"})
+                Bucket=s3_bucket, Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer})
             )
 
         requests_mock.get(m_url + "/datasets/boligpriser_historic-4owcY/versions", text=json.dumps(version_metadata))
         requests_mock.get(
-            m_url + "/datasets/boligpriser_historic-4owcY/versions/{}/editions".format(version_metadata[0]["versionID"]), text=json.dumps(edition_metadata)
+            m_url + f"/datasets/boligpriser_historic-4owcY/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata)
         )
-
         result = main.get_latest_edition(event, {})
         assert result["statusCode"] == 200
         assert json.loads(result["body"])[1] == {"number": "08"}

@@ -39,21 +39,10 @@ class Test:
             prefix = urllib.parse.unquote_plus(self.base_key)
             file_numer = str(i).zfill(2)
             print(f"{prefix}{file_numer}.json")
-            s3_client.put_object(
-                Bucket=s3_bucket,
-                Key=f"{prefix}{file_numer}.json",
-                Body=json.dumps({"number": file_numer}),
-            )
+            s3_client.put_object(Bucket=s3_bucket, Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer}))
 
-        requests_mock.get(
-            m_url + "/datasets/boligpriser_historic-4owcY/versions",
-            text=json.dumps(version_metadata),
-        )
-        requests_mock.get(
-            m_url
-            + f"/datasets/boligpriser_historic-4owcY/versions/{version_metadata[0]['version']}/editions",
-            text=json.dumps(edition_metadata),
-        )
+        requests_mock.get(m_url + "/datasets/boligpriser_historic-4owcY/versions", text=json.dumps(version_metadata))
+        requests_mock.get(m_url + f"/datasets/boligpriser_historic-4owcY/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata))
         result = main.get_latest_edition(event, {})
         assert result["statusCode"] == 200
         assert json.loads(result["body"])[1] == {"number": "08"}

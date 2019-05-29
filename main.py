@@ -10,14 +10,8 @@ bucket = "ok-origo-dataplatform-{}".format(os.environ["STAGE"])
 
 
 def get_latest_edition(event, context):
-    if (
-        event["requestContext"]["authorizer"]["principalId"]
-        != "service-account-bydelsfakta-frontend"
-    ):
-        return {
-            "statusCode": 403,
-            "body": "Forbidden: Only bydelsfakta frontend is allowed to use this api",
-        }
+    if event["requestContext"]["authorizer"]["principalId"] != "service-account-bydelsfakta-frontend":
+        return {"statusCode": 403, "body": "Forbidden: Only bydelsfakta frontend is allowed to use this api"}
 
     def gen_lists():
         keys = []
@@ -29,12 +23,7 @@ def get_latest_edition(event, context):
             numbers = pattern.findall(query)
             keys = [f"{base_key}{geography}.json" for geography in numbers]
 
-        return [
-            json.loads(
-                s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")
-            )
-            for key in keys
-        ]
+        return [json.loads(s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")) for key in keys]
 
     session = boto3.Session()
     s3 = session.client("s3")
@@ -49,25 +38,17 @@ def get_latest_edition(event, context):
     latest_version = max(versions, key=lambda x: x["version"] if "version" in x else -1)
     version_name = latest_version.get("versionID", latest_version["version"])
 
-    all_editions = requests.get(
-        f"{metadata_api}/datasets/{dataset}/versions/{version_name}/editions"
-    )
+    all_editions = requests.get(f"{metadata_api}/datasets/{dataset}/versions/{version_name}/editions")
 
     editions = json.loads(all_editions.text)
     latest_edition = max(editions, key=lambda x: x["Id"] if "Id" in x else -1)
     edition_name = latest_edition.get("editionID", latest_edition["Id"].split("/")[-1])
 
-    base_key = (
-        f"processed/green/{dataset}/version={version_name}/edition={edition_name}/"
-    )
+    base_key = f"processed/green/{dataset}/version={version_name}/edition={edition_name}/"
 
     data = gen_lists()
 
-    return {
-        "statusCode": 200,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(data, ensure_ascii=False),
-    }
+    return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": json.dumps(data, ensure_ascii=False)}
 
 
 """

@@ -12,7 +12,7 @@ os.environ["METADATA_API_URL"] = m_url
 os.environ["STAGE"] = stage
 import main
 
-version_metadata = [{"Id": "boligpriser_historic-4owcY/1", "version": "1", }]
+version_metadata = [{"Id": "boligpriser_historic-4owcY/1", "version": "1"}]
 edition_metadata = [
     {
         "Id": "boligpriser_historic-4owcY/1/20190529T113052",
@@ -27,7 +27,7 @@ edition_metadata = [
         "Id": "boligpriser_historic-4owcY/1/20190429T113052",
         "endTime": "2017-12-31T23:00:00+01:00",
         "startTime": "2004-01-01T00:00:00+01:00",
-    }
+    },
 ]
 
 
@@ -40,12 +40,19 @@ class Test:
             file_numer = str(i).zfill(2)
             print(f"{prefix}{file_numer}.json")
             s3_client.put_object(
-                Bucket=s3_bucket, Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer})
+                Bucket=s3_bucket,
+                Key=f"{prefix}{file_numer}.json",
+                Body=json.dumps({"number": file_numer}),
             )
 
-        requests_mock.get(m_url + "/datasets/boligpriser_historic-4owcY/versions", text=json.dumps(version_metadata))
         requests_mock.get(
-            m_url + f"/datasets/boligpriser_historic-4owcY/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata)
+            m_url + "/datasets/boligpriser_historic-4owcY/versions",
+            text=json.dumps(version_metadata),
+        )
+        requests_mock.get(
+            m_url
+            + f"/datasets/boligpriser_historic-4owcY/versions/{version_metadata[0]['version']}/editions",
+            text=json.dumps(edition_metadata),
         )
         result = main.get_latest_edition(event, {})
         assert result["statusCode"] == 200

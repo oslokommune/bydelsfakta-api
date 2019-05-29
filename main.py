@@ -41,8 +41,8 @@ def get_latest_edition(event, context):
     all_editions = requests.get(f"{metadata_api}/datasets/{dataset}/versions/{version_name}/editions")
 
     editions = json.loads(all_editions.text)
-    latest_edition = max(editions, key=lambda x: x["edition"] if "edition" in x else -1)
-    edition_name = latest_edition.get("editionID", latest_edition["edition"])
+    latest_edition = max(editions, key=lambda x: x["Id"] if "Id" in x else -1)
+    edition_name = latest_edition.get("editionID", latest_edition["Id"].split("/")[-1])
 
     base_key = f"processed/green/{dataset}/version={version_name}/edition={edition_name}/"
 

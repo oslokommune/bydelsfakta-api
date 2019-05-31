@@ -3,6 +3,7 @@ import os
 import urllib
 
 import boto3
+import pytest
 from moto import mock_s3
 from pytest import fixture
 
@@ -12,10 +13,14 @@ os.environ["METADATA_API_URL"] = m_url
 os.environ["STAGE"] = stage
 import main
 
-version_metadata = [{"Id": "boligpriser_historic-4owcY/1", "version": "1"}]
+dataset_id = "boligpriser"
+version = 1
+
+version_metadata = [{"Id": f"{dataset_id}/{version}", "version": f"{version}"}]
+version_metadata_old = [{"versionID": f"{dataset_id}/{version}"}]
 edition_metadata = [
     {
-        "Id": "boligpriser_historic-4owcY/1/20190529T113052",
+        "Id": f"{dataset_id}/{version}/20190529T113052",
         "description": "Latest Edition",
         "edition": "2019-05-29T13:30:52+02:00",
         "endTime": "2017-12-31T23:00:00+01:00",
@@ -24,15 +29,25 @@ edition_metadata = [
     {
         "description": "Old Edition",
         "edition": "2019-04-29T13:30:52+02:00",
-        "Id": "boligpriser_historic-4owcY/1/20190429T113052",
+        "Id": f"{dataset_id}/{version}/20190429T113052",
         "endTime": "2017-12-31T23:00:00+01:00",
         "startTime": "2004-01-01T00:00:00+01:00",
     },
 ]
 
+edition_metadata_old = [
+    {
+        "editionID": f"EDITION-20190529T113052",
+        "description": "Latest Edition",
+        "edition": "2019-05-29T13:30:52+02:00",
+        "endTime": "2017-12-31T23:00:00+01:00",
+        "startTime": "2004-01-01T00:00:00+01:00",
+    }
+]
+
 
 class Test:
-    base_key = "processed/green/boligpriser_historic-4owcY/version%3D1/edition%3D20190529T113052/"
+    base_key = f"processed/green/{dataset_id}/version%3D1/edition%3D20190529T113052/"
 
     def test_main_handler(self, requests_mock, s3_client, s3_bucket):
         for i in range(0, 19):
@@ -41,11 +56,30 @@ class Test:
             print(f"{prefix}{file_numer}.json")
             s3_client.put_object(Bucket=s3_bucket, Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer}))
 
-        requests_mock.get(m_url + "/datasets/boligpriser_historic-4owcY/versions", text=json.dumps(version_metadata))
-        requests_mock.get(m_url + f"/datasets/boligpriser_historic-4owcY/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata))
-        result = main.get_latest_edition(event, {})
+        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(version_metadata))
+        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata))
+        result = main.handler(event, {})
         assert result["statusCode"] == 200
         assert json.loads(result["body"])[1] == {"number": "08"}
+
+    def test_get_latest_version(self, requests_mock):
+        versions = version_metadata + [{"Id": f"{dataset_id}/2", "version": f"2"}]
+        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(versions))
+        assert main.get_latest_version(dataset_id) == "2"
+
+    def test_fail_on_old_version(self, requests_mock):
+        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(version_metadata_old))
+        with pytest.raises(main.IllegalFormatError):
+            main.get_latest_version(dataset_id)
+
+    def test_get_latest_edition(self, requests_mock):
+        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/1/editions", text=json.dumps(edition_metadata))
+        assert main.get_latest_edition(dataset_id, version=1) == edition_metadata[0]
+
+    def test_fail_on_old_edition(self, requests_mock):
+        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/1/editions", text=json.dumps(edition_metadata_old))
+        with pytest.raises(main.IllegalFormatError):
+            main.get_latest_edition(dataset_id, version=1)
 
 
 @fixture
@@ -68,7 +102,7 @@ event = {
     "path": "/",
     "httpMethod": "GET",
     "queryStringParameters": {"geography": "02,08,12"},
-    "pathParameters": {"dataset": "boligpriser_historic-4owcY"},
+    "pathParameters": {"dataset": f"{dataset_id}"},
     "stageVariables": {},
     "headers": {
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",

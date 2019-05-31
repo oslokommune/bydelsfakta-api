@@ -1,4 +1,4 @@
-handler: main.get_latest_edition
+handler: main.handler
 layers:
   - { Ref: PythonRequirementsLambdaLayer }
 environment:

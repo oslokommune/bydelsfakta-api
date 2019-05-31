@@ -4,15 +4,22 @@ import re
 
 import boto3
 import requests
+import logging
 
 metadata_api = os.environ["METADATA_API_URL"]
 bucket = "ok-origo-dataplatform-{}".format(os.environ["STAGE"])
 
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
-def get_latest_edition(event, context):
+
+def handler(event, context):
     if event["requestContext"]["authorizer"]["principalId"] != "service-account-bydelsfakta-frontend":
         return {"statusCode": 403, "body": "Forbidden: Only bydelsfakta frontend is allowed to use this api"}
+    return handle_event(event)
 
+
+def handle_event(event):
     def gen_lists():
         keys = []
         if not query:
@@ -33,28 +40,48 @@ def get_latest_edition(event, context):
     if event["queryStringParameters"] and "geography" in event["queryStringParameters"]:
         query = event["queryStringParameters"]["geography"]
 
-    all_versions = requests.get(f"{metadata_api}/datasets/{dataset}/versions")
-    versions = json.loads(all_versions.text)
-    latest_version = max(versions, key=lambda x: x["version"] if "version" in x else -1)
-    version_name = latest_version.get("versionID", latest_version["version"])
+    try:
+        version = get_latest_version(dataset)
+    except IllegalFormatError:
+        return response(400, "One or more versions have illegal format")
 
-    all_editions = requests.get(f"{metadata_api}/datasets/{dataset}/versions/{version_name}/editions")
+    try:
+        edition = get_latest_edition(dataset, version)
+    except IllegalFormatError:
+        return response(400, "One or more editions have illegal format")
 
-    editions = json.loads(all_editions.text)
-    latest_edition = max(editions, key=lambda x: x["edition"] if "edition" in x else -1)
-    edition_name = latest_edition.get("editionID", latest_edition["edition"])
+    edition_id = edition["Id"].split("/")[-1]
 
-    base_key = f"processed/green/{dataset}/version={version_name}/edition={edition_name}/"
-
+    base_key = f"processed/green/{dataset}/version={version}/edition={edition_id}/"
     data = gen_lists()
 
     return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": json.dumps(data, ensure_ascii=False)}
 
 
-"""
-/datasets/:id?geography=00,02,06,12
+def get_latest_version(dataset_id):
+    all_versions = requests.get(f"{metadata_api}/datasets/{dataset_id}/versions")
+    all_versions = json.loads(all_versions.text)
+    if not all(["Id" in version for version in all_versions]):
+        logger.info("Versions with bad format was found:")
+        logger.info([edition for edition in all_versions if "Id" not in edition])
+        raise IllegalFormatError("Wrong format")
+    latest_version = max(all_versions, key=lambda x: x["version"] if "version" in x else -1)
+    return latest_version["version"]
 
-:id dataset id (path param)
-geography query param for filter
 
-"""
+def get_latest_edition(dataset_id, version):
+    all_editions = requests.get(f"{metadata_api}/datasets/{dataset_id}/versions/{version}/editions")
+    all_editions = json.loads(all_editions.text)
+    if not all(["Id" in edition for edition in all_editions]):
+        logger.info("Editions with bad format was found:")
+        logger.info([edition for edition in all_editions if "Id" not in edition])
+        raise IllegalFormatError("Wrong format")
+    return max(all_editions, key=lambda x: x["edition"] if "edition" in x else -1)
+
+
+def response(status, body):
+    return {"statusCode": status, "headers": {"Content-Type": "application/json"}, "body": json.dumps(body, ensure_ascii=False)}
+
+
+class IllegalFormatError(Exception):
+    pass

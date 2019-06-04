@@ -23,7 +23,7 @@ deploy-prod: test
 .PHONY: put-parameter
 put-parameter: init
 	url=$$(sls info --verbose | grep -Ev "Stack Outputs|Service Information" | yq .ServiceEndpoint) &&\
-	aws --profile saml --region eu-west-1 ssm put-parameter \
+	aws --region eu-west-1 ssm put-parameter \
 	--name "/dataplatform/bydelsfakta-api/url" \
 	--value $$url \
 	--type "String" \

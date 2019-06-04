@@ -35,24 +35,30 @@ def handle_event(event):
     session = boto3.Session()
     s3 = session.client("s3")
 
-    dataset = event["pathParameters"]["dataset"]
+    dataset_id = event["pathParameters"]["dataset"]
+
+    dataset = requests.get(f"{metadata_api}/datasets/{dataset_id}")
+    dataset = json.loads(dataset)
+    stage = dataset["processing_stage"]
+    confidentiality = dataset["confidentiality"]
+
     query = []
     if event["queryStringParameters"] and "geography" in event["queryStringParameters"]:
         query = event["queryStringParameters"]["geography"]
 
     try:
-        version = get_latest_version(dataset)
+        version = get_latest_version(dataset_id)
     except IllegalFormatError:
         return response(400, "One or more versions have illegal format")
 
     try:
-        edition = get_latest_edition(dataset, version)
+        edition = get_latest_edition(dataset_id, version)
     except IllegalFormatError:
         return response(400, "One or more editions have illegal format")
 
     edition_id = edition["Id"].split("/")[-1]
 
-    base_key = f"processed/green/{dataset}/version={version}/edition={edition_id}/"
+    base_key = f"{stage}/{confidentiality}/{dataset_id}/version={version}/edition={edition_id}/"
     data = gen_lists()
 
     return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": json.dumps(data, ensure_ascii=False)}
@@ -63,7 +69,7 @@ def get_latest_version(dataset_id):
     all_versions = json.loads(all_versions.text)
     if not all(["Id" in version for version in all_versions]):
         logger.info("Versions with bad format was found:")
-        logger.info([edition for edition in all_versions if "Id" not in edition])
+        logger.info([version for version in all_versions if "Id" not in version])
         raise IllegalFormatError("Wrong format")
     latest_version = max(all_versions, key=lambda x: x["version"] if "version" in x else -1)
     return latest_version["version"]

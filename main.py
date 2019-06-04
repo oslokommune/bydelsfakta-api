@@ -82,7 +82,7 @@ def get_latest_edition(dataset_id, version):
         logger.info("Editions with bad format was found:")
         logger.info([edition for edition in all_editions if "Id" not in edition])
         raise IllegalFormatError("Wrong format")
-    return max(all_editions, key=lambda x: x["edition"] if "edition" in x else -1)
+    return max(all_editions, key=lambda x: x["Id"] if "Id" in x else -1)
 
 
 def response(status, body):

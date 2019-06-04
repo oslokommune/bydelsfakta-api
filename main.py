@@ -38,7 +38,7 @@ def handle_event(event):
     dataset_id = event["pathParameters"]["dataset"]
 
     dataset = requests.get(f"{metadata_api}/datasets/{dataset_id}")
-    dataset = json.loads(dataset)
+    dataset = json.loads(dataset.text)
     stage = dataset["processing_stage"]
     confidentiality = dataset["confidentiality"]
 

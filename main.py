@@ -36,6 +36,7 @@ def handle_event(event):
     s3 = session.client("s3")
 
     dataset_id = event["pathParameters"]["dataset"]
+    print(f"Fetching Bydelsfakta data for {dataset_id}")
 
     dataset = requests.get(f"{metadata_api}/datasets/{dataset_id}")
     dataset = json.loads(dataset.text)
@@ -59,6 +60,7 @@ def handle_event(event):
     edition_id = edition["Id"].split("/")[-1]
 
     base_key = f"{stage}/{confidentiality}/{dataset_id}/version={version}/edition={edition_id}/"
+    print(f"Fetching data from {base_key}")
     data = gen_lists()
 
     return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": json.dumps(data, ensure_ascii=False)}

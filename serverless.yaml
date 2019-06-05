@@ -22,6 +22,7 @@ plugins:
   - serverless-aws-documentation
   - serverless-python-requirements
   - serverless-pseudo-parameters
+  - serverless-scriptable-plugin
 package:
   exclude:
     - "./**"
@@ -32,6 +33,8 @@ functions:
   get_dataset: ${file(serverless/functions/get_dataset.yaml)}
 
 custom:
+  scriptHooks:
+    after:deploy:finalize: make put-parameter
   documentation:
     title: ${self:service}
     version: 0.1.1

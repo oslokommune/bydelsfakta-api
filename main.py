@@ -29,6 +29,9 @@ def handle_event(event):
             pattern = re.compile("(\d\d)")
             numbers = pattern.findall(query)
             keys = [f"{base_key}{geography}.json" for geography in numbers]
+        if not keys:
+            logger.info(f"No files where found for the dataset")
+            return response(422, "Even though an edition exists, no files where found for the dataset")
 
         return [json.loads(s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")) for key in keys]
 
@@ -36,12 +39,17 @@ def handle_event(event):
     s3 = session.client("s3")
 
     dataset_id = event["pathParameters"]["dataset"]
-    print(f"Fetching Bydelsfakta data for {dataset_id}")
+    logger.info(f"Fetching Bydelsfakta data for {dataset_id}")
 
     dataset = requests.get(f"{metadata_api}/datasets/{dataset_id}")
     dataset = json.loads(dataset.text)
     stage = dataset["processing_stage"]
     confidentiality = dataset["confidentiality"]
+    parent_id = dataset.get("parent_id", None)
+
+    if not parent_id:
+        logger.info(f"{dataset_id} is missing parent_id")
+        return response(422, "Was expecting to find a parent_id on the requested resource but was None")
 
     query = []
     if event["queryStringParameters"] and "geography" in event["queryStringParameters"]:
@@ -59,8 +67,8 @@ def handle_event(event):
 
     edition_id = edition["Id"].split("/")[-1]
 
-    base_key = f"{stage}/{confidentiality}/{dataset_id}/version={version}/edition={edition_id}/"
-    print(f"Fetching data from {base_key}")
+    base_key = f"{stage}/{confidentiality}/{parent_id}/{dataset_id}/version={version}/edition={edition_id}/"
+    logger.info(f"Fetching data from {base_key}")
     data = gen_lists()
 
     return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": json.dumps(data, ensure_ascii=False)}

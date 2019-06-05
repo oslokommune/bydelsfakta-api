@@ -16,11 +16,7 @@ import main
 dataset_id = "boligpriser"
 version = 1
 
-dataset_metadata = {
-    "Id": f"{dataset_id}",
-    "processing_stage": "raw",
-    "confidentiality": "green",
-}
+dataset_metadata = {"Id": f"{dataset_id}", "processing_stage": "raw", "confidentiality": "green"}
 version_metadata = [{"Id": f"{dataset_id}/{version}", "version": f"{version}"}]
 version_metadata_old = [{"versionID": f"{dataset_id}/{version}"}]
 edition_metadata = [

@@ -16,6 +16,7 @@ import main
 dataset_id = "boligpriser"
 version = 1
 
+dataset_metadata = {"Id": f"{dataset_id}", "processing_stage": "raw", "confidentiality": "green"}
 version_metadata = [{"Id": f"{dataset_id}/{version}", "version": f"{version}"}]
 version_metadata_old = [{"versionID": f"{dataset_id}/{version}"}]
 edition_metadata = [
@@ -47,7 +48,7 @@ edition_metadata_old = [
 
 
 class Test:
-    base_key = f"processed/green/{dataset_id}/version%3D1/edition%3D20190529T113052/"
+    base_key = f"raw/green/{dataset_id}/version%3D1/edition%3D20190529T113052/"
 
     def test_main_handler(self, requests_mock, s3_client, s3_bucket):
         for i in range(0, 19):
@@ -56,6 +57,7 @@ class Test:
             print(f"{prefix}{file_numer}.json")
             s3_client.put_object(Bucket=s3_bucket, Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer}))
 
+        requests_mock.get(m_url + f"/datasets/{dataset_id}", text=json.dumps(dataset_metadata))
         requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(version_metadata))
         requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata))
         result = main.handler(event, {})

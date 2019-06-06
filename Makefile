@@ -1,6 +1,6 @@
 .PHONY: init
 init:
-	python3 -m pip install tox black pip-tools yq
+	python3 -m pip install tox black pip-tools
 	pip-compile
 
 .PHONY: format
@@ -20,14 +20,11 @@ deploy-prod: test
 	sls deploy --stage prod && \
 	sls downloadDocumentation --outputFileName swagger.yaml --stage prod
 
-.PHONY: put-parameter
-put-parameter: init
-	url=$$(sls info --verbose | grep -Ev "Stack Outputs|Service Information" | yq .ServiceEndpoint) &&\
-	aws --region eu-west-1 ssm put-parameter \
-	--name "/dataplatform/bydelsfakta-api/url" \
-	--value $$url \
-	--type "String" \
-	--overwrite
+.PHONY: update-ssm
+update-ssm:
+	url=$$(sls info -s $$STAGE --verbose | grep ServiceEndpoint | cut -d' ' -f2) &&\
+	aws --region eu-west-1 ssm put-parameter --overwrite \
+	--cli-input-json "{\"Type\": \"String\", \"Name\": \"/dataplatform/bydelsfakta-api/url\", \"Value\": \"$$url\"}"
 
 echo:
 	@echo "HELLO"

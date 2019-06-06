@@ -34,7 +34,7 @@ functions:
 
 custom:
   scriptHooks:
-    after:deploy:finalize: make put-parameter
+    after:deploy:finalize: make update-ssm STAGE=${self:provider.stage}
   documentation:
     title: ${self:service}
     version: 0.1.1

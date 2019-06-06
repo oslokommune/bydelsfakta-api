@@ -13,10 +13,11 @@ os.environ["METADATA_API_URL"] = m_url
 os.environ["STAGE"] = stage
 import main
 
+parent_id = "bydelsfakta"
 dataset_id = "boligpriser"
 version = 1
 
-dataset_metadata = {"Id": f"{dataset_id}", "processing_stage": "raw", "confidentiality": "green"}
+dataset_metadata = {"Id": dataset_id, "processing_stage": "raw", "confidentiality": "green", "parent_id": parent_id}
 version_metadata = [{"Id": f"{dataset_id}/{version}", "version": f"{version}"}]
 version_metadata_old = [{"versionID": f"{dataset_id}/{version}"}]
 edition_metadata = [
@@ -48,7 +49,7 @@ edition_metadata_old = [
 
 
 class Test:
-    base_key = f"raw/green/{dataset_id}/version%3D1/edition%3D20190529T113052/"
+    base_key = f"raw/green/{parent_id}/{dataset_id}/version%3D1/edition%3D20190529T113052/"
 
     def test_main_handler(self, requests_mock, s3_client, s3_bucket):
         for i in range(0, 19):

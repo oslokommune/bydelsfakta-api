@@ -1,9 +1,9 @@
 ---
 swagger: "2.0"
 info:
-  version: "2019-03-11T12:19:47Z"
+  version: "2019-06-07T12:06:22Z"
   title: "prod-bydelsfakta-api"
-host: "6aa43ueckj.execute-api.eu-west-1.amazonaws.com"
+host: "2rkvgg6fwj.execute-api.eu-west-1.amazonaws.com"
 basePath: "/prod"
 schemes:
 - "https"

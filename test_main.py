@@ -57,7 +57,6 @@ class Test:
             file_numer = str(i).zfill(2)
             print(f"{prefix}{file_numer}.json")
             s3_client.put_object(Bucket=s3_bucket, Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer}))
-
         requests_mock.get(m_url + f"/datasets/{dataset_id}", text=json.dumps(dataset_metadata))
         requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(version_metadata))
         requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata))

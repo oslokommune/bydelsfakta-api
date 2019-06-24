@@ -8,8 +8,8 @@ import logging
 from aws_xray_sdk.core import xray_recorder
 from aws_xray_sdk.core import patch
 
-patch(['boto3'])
-patch(['requests'])
+patch(["boto3"])
+patch(["requests"])
 
 metadata_api = os.environ["METADATA_API_URL"]
 bucket = "ok-origo-dataplatform-{}".format(os.environ["STAGE"])
@@ -23,9 +23,10 @@ def handler(event, context):
         return {"statusCode": 403, "body": "Forbidden: Only bydelsfakta frontend is allowed to use this api"}
     return handle_event(event)
 
-@xray_recorder.capture('handle_event')
+
+@xray_recorder.capture("handle_event")
 def handle_event(event):
-    @xray_recorder.capture('get_objects')
+    @xray_recorder.capture("get_objects")
     def gen_lists():
         keys = []
         if not query:
@@ -79,7 +80,8 @@ def handle_event(event):
 
     return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": json.dumps(data, ensure_ascii=False)}
 
-@xray_recorder.capture('get_version')
+
+@xray_recorder.capture("get_version")
 def get_latest_version(dataset_id):
     all_versions = requests.get(f"{metadata_api}/datasets/{dataset_id}/versions")
     all_versions = json.loads(all_versions.text)
@@ -90,7 +92,8 @@ def get_latest_version(dataset_id):
     latest_version = max(all_versions, key=lambda x: x["version"] if "version" in x else -1)
     return latest_version["version"]
 
-@xray_recorder.capture('get_edition')
+
+@xray_recorder.capture("get_edition")
 def get_latest_edition(dataset_id, version):
     all_editions = requests.get(f"{metadata_api}/datasets/{dataset_id}/versions/{version}/editions")
     all_editions = json.loads(all_editions.text)

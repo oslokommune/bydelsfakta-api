@@ -51,12 +51,12 @@ edition_metadata_old = [
 class Test:
     base_key = f"raw/green/{parent_id}/{dataset_id}/version%3D1/edition%3D20190529T113052/"
 
-    def test_main_handler(self, requests_mock, s3_client, s3_bucket):
+    def test_main_handler(self, requests_mock, s3_bucket):
         for i in range(0, 19):
             prefix = urllib.parse.unquote_plus(self.base_key)
             file_numer = str(i).zfill(2)
             print(f"{prefix}{file_numer}.json")
-            s3_client.put_object(Bucket=s3_bucket, Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer}))
+            s3_bucket[0].put_object(Bucket=s3_bucket[1], Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer}))
         requests_mock.get(m_url + f"/datasets/{dataset_id}", text=json.dumps(dataset_metadata))
         requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(version_metadata))
         requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata))
@@ -95,7 +95,7 @@ def s3_client():
 def s3_bucket(s3_client):
     bucket = "ok-origo-dataplatform-test"
     s3_client.create_bucket(Bucket=bucket)
-    return bucket
+    return s3_client, bucket
 
 
 event = {

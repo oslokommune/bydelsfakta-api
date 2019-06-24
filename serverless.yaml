@@ -12,12 +12,19 @@ provider:
   environment:
     METADATA_API_URL: ${ssm:/dataplatform/metadata-api/url}
     STAGE: ${self:provider.stage}
+  tracing:
+    lambda: true
+    apiGateway: true
   iamManagedPolicies:
     - Fn::Join:
       - ':'
       - - 'arn:aws:iam:'
         - Ref: AWS::AccountId
         - 'policy/bydelsfakta-api-policy'
+    - Fn::Join:
+      - ':'
+      - - 'arn:aws:iam::aws'
+        - 'policy/AWSXRayDaemonWriteAccess'
 plugins:
   - serverless-aws-documentation
   - serverless-python-requirements

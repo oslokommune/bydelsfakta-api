@@ -15,6 +15,8 @@ provider:
   tracing:
     lambda: true
     apiGateway: true
+  apiGateway:
+    minimumCompressionSize: 1024
   iamManagedPolicies:
     - Fn::Join:
       - ':'
@@ -54,3 +56,4 @@ custom:
     dockerizePip: non-linux
     layer: true
     slim: true
+    usePoetry: false

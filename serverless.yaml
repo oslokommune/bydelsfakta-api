@@ -1,5 +1,7 @@
 service: bydelsfakta-api
 
+frameworkVersion: ">=1.50.0 <2.0.0"
+
 provider:
   name: aws
   runtime: python3.7
@@ -27,11 +29,18 @@ provider:
       - ':'
       - - 'arn:aws:iam::aws'
         - 'policy/AWSXRayDaemonWriteAccess'
+  tags:
+    GIT_REV: ${git:branch}:${git:sha1}
+  environment:
+    GIT_REV: ${git:branch}:${git:sha1}
+
 plugins:
   - serverless-aws-documentation
   - serverless-python-requirements
   - serverless-pseudo-parameters
   - serverless-scriptable-plugin
+  - serverless-plugin-git-variables
+
 package:
   exclude:
     - "./**"
@@ -40,6 +49,12 @@ package:
 
 functions:
   get_dataset: ${file(serverless/functions/get_dataset.yaml)}
+
+resources:
+  Description: >
+    ${self:service} ${git:branch}:${git:sha1}
+
+    ${git:message}
 
 custom:
   scriptHooks:
@@ -57,3 +72,4 @@ custom:
     layer: true
     slim: true
     usePoetry: false
+  exportGitVariables: false

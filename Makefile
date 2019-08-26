@@ -56,12 +56,12 @@ format: init
 update-ssm-prod:
 	url=$$(sls info -s prod --verbose | grep ServiceEndpoint | cut -d' ' -f2) &&\
 	aws --region eu-west-1 ssm put-parameter --overwrite \
-	--profile=$(.PROD_PROFILE)\
+	--profile=$(.PROD_PROFILE) \
 	--cli-input-json "{\"Type\": \"String\", \"Name\": \"/dataplatform/bydelsfakta-api/url\", \"Value\": \"$$url\"}"
 
 .PHONY: update-ssm-dev
 update-ssm-dev: login-dev
 	url=$$(sls info -s dev --verbose | grep ServiceEndpoint | cut -d' ' -f2) &&\
 	aws --region eu-west-1 ssm put-parameter --overwrite \
-	--profile=$(.DEV_PROFILE)\
+	--profile=$(.DEV_PROFILE) \
 	--cli-input-json "{\"Type\": \"String\", \"Name\": \"/dataplatform/bydelsfakta-api/url\", \"Value\": \"$$url\"}"

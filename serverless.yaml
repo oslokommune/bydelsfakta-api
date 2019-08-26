@@ -14,6 +14,7 @@ provider:
   environment:
     METADATA_API_URL: ${ssm:/dataplatform/metadata-api/url}
     STAGE: ${self:provider.stage}
+    GIT_REV: ${git:branch}:${git:sha1}
   tracing:
     lambda: true
     apiGateway: true
@@ -31,14 +32,11 @@ provider:
         - 'policy/AWSXRayDaemonWriteAccess'
   tags:
     GIT_REV: ${git:branch}:${git:sha1}
-  environment:
-    GIT_REV: ${git:branch}:${git:sha1}
 
 plugins:
   - serverless-aws-documentation
   - serverless-python-requirements
   - serverless-pseudo-parameters
-  - serverless-scriptable-plugin
   - serverless-plugin-git-variables
 
 package:
@@ -57,8 +55,6 @@ resources:
     ${git:message}
 
 custom:
-  scriptHooks:
-    after:deploy:finalize: make update-ssm STAGE=${self:provider.stage}
   documentation:
     title: ${self:service}
     version: 0.1.1

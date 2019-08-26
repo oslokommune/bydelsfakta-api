@@ -17,7 +17,12 @@ parent_id = "bydelsfakta"
 dataset_id = "boligpriser"
 version = 1
 
-dataset_metadata = {"Id": dataset_id, "processing_stage": "raw", "confidentiality": "green", "parent_id": parent_id}
+dataset_metadata = {
+    "Id": dataset_id,
+    "processing_stage": "raw",
+    "confidentiality": "green",
+    "parent_id": parent_id,
+}
 version_metadata = [{"Id": f"{dataset_id}/{version}", "version": f"{version}"}]
 version_metadata_old = [{"versionID": f"{dataset_id}/{version}"}]
 edition_metadata = [
@@ -49,37 +54,63 @@ edition_metadata_old = [
 
 
 class Test:
-    base_key = f"raw/green/{parent_id}/{dataset_id}/version%3D1/edition%3D20190529T113052/"
+    base_key = (
+        f"raw/green/{parent_id}/{dataset_id}/version%3D1/edition%3D20190529T113052/"
+    )
 
     def test_main_handler(self, requests_mock, s3_bucket):
         for i in range(0, 19):
             prefix = urllib.parse.unquote_plus(self.base_key)
             file_numer = str(i).zfill(2)
             print(f"{prefix}{file_numer}.json")
-            s3_bucket[0].put_object(Bucket=s3_bucket[1], Key=f"{prefix}{file_numer}.json", Body=json.dumps({"number": file_numer}))
-        requests_mock.get(m_url + f"/datasets/{dataset_id}", text=json.dumps(dataset_metadata))
-        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(version_metadata))
-        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions", text=json.dumps(edition_metadata))
+            s3_bucket[0].put_object(
+                Bucket=s3_bucket[1],
+                Key=f"{prefix}{file_numer}.json",
+                Body=json.dumps({"number": file_numer}),
+            )
+        requests_mock.get(
+            m_url + f"/datasets/{dataset_id}", text=json.dumps(dataset_metadata)
+        )
+        requests_mock.get(
+            m_url + f"/datasets/{dataset_id}/versions",
+            text=json.dumps(version_metadata),
+        )
+        requests_mock.get(
+            m_url
+            + f"/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions",
+            text=json.dumps(edition_metadata),
+        )
         result = main.handler(event, {})
         assert result["statusCode"] == 200
         assert json.loads(result["body"])[1] == {"number": "08"}
 
     def test_get_latest_version(self, requests_mock):
         versions = version_metadata + [{"Id": f"{dataset_id}/2", "version": f"2"}]
-        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(versions))
+        requests_mock.get(
+            m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(versions)
+        )
         assert main.get_latest_version(dataset_id) == "2"
 
     def test_fail_on_old_version(self, requests_mock):
-        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(version_metadata_old))
+        requests_mock.get(
+            m_url + f"/datasets/{dataset_id}/versions",
+            text=json.dumps(version_metadata_old),
+        )
         with pytest.raises(main.IllegalFormatError):
             main.get_latest_version(dataset_id)
 
     def test_get_latest_edition(self, requests_mock):
-        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/1/editions", text=json.dumps(edition_metadata))
+        requests_mock.get(
+            m_url + f"/datasets/{dataset_id}/versions/1/editions",
+            text=json.dumps(edition_metadata),
+        )
         assert main.get_latest_edition(dataset_id, version=1) == edition_metadata[0]
 
     def test_fail_on_old_edition(self, requests_mock):
-        requests_mock.get(m_url + f"/datasets/{dataset_id}/versions/1/editions", text=json.dumps(edition_metadata_old))
+        requests_mock.get(
+            m_url + f"/datasets/{dataset_id}/versions/1/editions",
+            text=json.dumps(edition_metadata_old),
+        )
         with pytest.raises(main.IllegalFormatError):
             main.get_latest_edition(dataset_id, version=1)
 

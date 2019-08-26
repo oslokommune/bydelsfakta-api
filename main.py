@@ -19,8 +19,14 @@ logger.setLevel(logging.INFO)
 
 
 def handler(event, context):
-    if event["requestContext"]["authorizer"]["principalId"] != "service-account-bydelsfakta-frontend":
-        return {"statusCode": 403, "body": "Forbidden: Only bydelsfakta frontend is allowed to use this api"}
+    if (
+        event["requestContext"]["authorizer"]["principalId"]
+        != "service-account-bydelsfakta-frontend"
+    ):
+        return {
+            "statusCode": 403,
+            "body": "Forbidden: Only bydelsfakta frontend is allowed to use this api",
+        }
     return handle_event(event)
 
 
@@ -38,9 +44,17 @@ def handle_event(event):
             keys = [f"{base_key}{geography}.json" for geography in numbers]
         if not keys:
             logger.info(f"No files where found for the dataset")
-            return response(422, "Even though an edition exists, no files where found for the dataset")
+            return response(
+                422,
+                "Even though an edition exists, no files where found for the dataset",
+            )
 
-        return [json.loads(s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")) for key in keys]
+        return [
+            json.loads(
+                s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")
+            )
+            for key in keys
+        ]
 
     session = boto3.Session()
     s3 = session.client("s3")
@@ -56,7 +70,10 @@ def handle_event(event):
 
     if not parent_id:
         logger.info(f"{dataset_id} is missing parent_id")
-        return response(422, "Was expecting to find a parent_id on the requested resource but was None")
+        return response(
+            422,
+            "Was expecting to find a parent_id on the requested resource but was None",
+        )
 
     query = []
     if event["queryStringParameters"] and "geography" in event["queryStringParameters"]:
@@ -78,7 +95,11 @@ def handle_event(event):
     logger.info(f"Fetching data from {base_key}")
     data = gen_lists()
 
-    return {"statusCode": 200, "headers": {"Content-Type": "application/json"}, "body": json.dumps(data, ensure_ascii=False)}
+    return {
+        "statusCode": 200,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(data, ensure_ascii=False),
+    }
 
 
 @xray_recorder.capture("get_version")
@@ -89,13 +110,17 @@ def get_latest_version(dataset_id):
         logger.info("Versions with bad format was found:")
         logger.info([version for version in all_versions if "Id" not in version])
         raise IllegalFormatError("Wrong format")
-    latest_version = max(all_versions, key=lambda x: x["version"] if "version" in x else -1)
+    latest_version = max(
+        all_versions, key=lambda x: x["version"] if "version" in x else -1
+    )
     return latest_version["version"]
 
 
 @xray_recorder.capture("get_edition")
 def get_latest_edition(dataset_id, version):
-    all_editions = requests.get(f"{metadata_api}/datasets/{dataset_id}/versions/{version}/editions")
+    all_editions = requests.get(
+        f"{metadata_api}/datasets/{dataset_id}/versions/{version}/editions"
+    )
     all_editions = json.loads(all_editions.text)
     if not all(["Id" in edition for edition in all_editions]):
         logger.info("Editions with bad format was found:")
@@ -105,7 +130,11 @@ def get_latest_edition(dataset_id, version):
 
 
 def response(status, body):
-    return {"statusCode": status, "headers": {"Content-Type": "application/json"}, "body": json.dumps(body, ensure_ascii=False)}
+    return {
+        "statusCode": status,
+        "headers": {"Content-Type": "application/json"},
+        "body": json.dumps(body, ensure_ascii=False),
+    }
 
 
 class IllegalFormatError(Exception):

@@ -12,8 +12,6 @@
 .PHONY: init
 init:
 	npm install
-	python3 -m pip install tox black pip-tools
-	pip-compile
 
 .PHONY: test
 test:
@@ -49,7 +47,7 @@ is-git-clean:
 
 .PHONY: format
 format: init
-	python3 -m black main.py test_main.py setup.py --line-length 160
+	python3 -m black .
 
 
 .PHONY: update-ssm-prod

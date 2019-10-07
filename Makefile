@@ -20,12 +20,10 @@ test:
 .PHONY: deploy
 deploy: init format test login-dev
 	sls deploy --stage dev --aws-profile $(.DEV_PROFILE)
-	$(MAKE) update-ssm-dev
 
 .PHONY: deploy-prod
 deploy-prod: init format is-git-clean test login-prod
 	sls deploy --stage prod --aws-profile $(.PROD_PROFILE)
-	$(MAKE) update-ssm-prod
 
 .PHONY: login-dev
 login-dev:

@@ -44,7 +44,7 @@ edition_metadata = [
 
 edition_metadata_old = [
     {
-        "editionID": f"EDITION-20190529T113052",
+        "editionID": "EDITION-20190529T113052",
         "description": "Latest Edition",
         "edition": "2019-05-29T13:30:52+02:00",
         "endTime": "2017-12-31T23:00:00+01:00",
@@ -85,7 +85,7 @@ class Test:
         assert json.loads(result["body"])[1] == {"number": "08"}
 
     def test_get_latest_version(self, requests_mock):
-        versions = version_metadata + [{"Id": f"{dataset_id}/2", "version": f"2"}]
+        versions = version_metadata + [{"Id": f"{dataset_id}/2", "version": "2"}]
         requests_mock.get(
             m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(versions)
         )

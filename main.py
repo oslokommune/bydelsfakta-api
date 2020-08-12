@@ -43,7 +43,7 @@ def handle_event(event):
             numbers = pattern.findall(query)
             keys = [f"{base_key}{geography}.json" for geography in numbers]
         if not keys:
-            logger.info(f"No files where found for the dataset")
+            logger.info("No files where found for the dataset")
             return response(
                 422,
                 "Even though an edition exists, no files where found for the dataset",

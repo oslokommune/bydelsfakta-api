@@ -12,7 +12,7 @@ provider:
     serverSideEncryption: AES256
   deploymentPrefix: deploy
   environment:
-    METADATA_API_URL: ${ssm:/dataplatform/metadata-api/url}
+    METADATA_API_URL: ${ssm:/dataplatform/shared/api-gateway-url}/metadata
     STAGE: ${self:provider.stage}
     GIT_REV: ${git:branch}:${git:sha1}
   tracing:

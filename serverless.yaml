@@ -1,6 +1,6 @@
 service: bydelsfakta-api
 
-frameworkVersion: ">=1.64.0 <2.0.0"
+frameworkVersion: ">=2.10.0 <3.0.0"
 
 provider:
   name: aws
@@ -22,15 +22,8 @@ provider:
     minimumCompressionSize: 1024
   rolePermissionsBoundary: "arn:aws:iam::#{AWS::AccountId}:policy/oslokommune/oslokommune-boundary"
   iamManagedPolicies:
-    - Fn::Join:
-      - ':'
-      - - 'arn:aws:iam:'
-        - Ref: AWS::AccountId
-        - 'policy/bydelsfakta-api-policy'
-    - Fn::Join:
-      - ':'
-      - - 'arn:aws:iam::aws'
-        - 'policy/AWSXRayDaemonWriteAccess'
+    - "arn:aws:iam::aws:policy/AWSXrayDaemonWriteAccess"
+    - 'arn:aws:iam::#{AWS::AccountId}:policy/bydelsfakta-api-policy'
   tags:
     GIT_REV: ${git:branch}:${git:sha1}
 

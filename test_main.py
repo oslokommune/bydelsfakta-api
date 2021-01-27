@@ -84,6 +84,12 @@ class Test:
         assert result["statusCode"] == 200
         assert json.loads(result["body"])[1] == {"number": "08"}
 
+    def test_main_handler_on_non_existing_dataset(self, requests_mock):
+        requests_mock.get(m_url + f"/datasets/{dataset_id}", status_code=404)
+        result = main.handler(event, {})
+        assert result["statusCode"] == 404
+        assert json.loads(result["body"]) == f"No dataset with id {dataset_id}"
+
     def test_get_latest_version(self, requests_mock):
         versions = version_metadata + [{"Id": f"{dataset_id}/2", "version": "2"}]
         requests_mock.get(

@@ -63,6 +63,9 @@ def handle_event(event):
     logger.info(f"Fetching Bydelsfakta data for {dataset_id}")
 
     dataset = requests.get(f"{metadata_api}/datasets/{dataset_id}")
+    if dataset.status_code == 404:
+        return response(404, f"No dataset with id {dataset_id}")
+
     dataset = json.loads(dataset.text)
     stage = dataset["processing_stage"]
     confidentiality = dataset["confidentiality"]

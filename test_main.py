@@ -69,15 +69,14 @@ class Test:
                 Body=json.dumps({"number": file_numer}),
             )
         requests_mock.get(
-            m_url + f"/datasets/{dataset_id}", text=json.dumps(dataset_metadata)
+            f"{m_url}/datasets/{dataset_id}", text=json.dumps(dataset_metadata)
         )
         requests_mock.get(
-            m_url + f"/datasets/{dataset_id}/versions",
+            f"{m_url}/datasets/{dataset_id}/versions",
             text=json.dumps(version_metadata),
         )
         requests_mock.get(
-            m_url
-            + f"/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions",
+            f"{m_url}/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions",
             text=json.dumps(edition_metadata),
         )
         result = main.handler(event, {})
@@ -85,7 +84,7 @@ class Test:
         assert json.loads(result["body"])[1] == {"number": "08"}
 
     def test_main_handler_on_non_existing_dataset(self, requests_mock):
-        requests_mock.get(m_url + f"/datasets/{dataset_id}", status_code=404)
+        requests_mock.get(f"{m_url}/datasets/{dataset_id}", status_code=404)
         result = main.handler(event, {})
         assert result["statusCode"] == 404
         assert json.loads(result["body"]) == f"No dataset with id {dataset_id}"
@@ -93,7 +92,7 @@ class Test:
     def test_get_latest_version(self, requests_mock):
         versions = version_metadata + [{"Id": f"{dataset_id}/2", "version": "2"}]
         requests_mock.get(
-            m_url + f"/datasets/{dataset_id}/versions", text=json.dumps(versions)
+            f"{m_url}/datasets/{dataset_id}/versions", text=json.dumps(versions)
         )
         assert main.get_latest_version(dataset_id) == "2"
 
@@ -107,14 +106,14 @@ class Test:
 
     def test_get_latest_edition(self, requests_mock):
         requests_mock.get(
-            m_url + f"/datasets/{dataset_id}/versions/1/editions",
+            f"{m_url}/datasets/{dataset_id}/versions/1/editions",
             text=json.dumps(edition_metadata),
         )
         assert main.get_latest_edition(dataset_id, version=1) == edition_metadata[0]
 
     def test_fail_on_old_edition(self, requests_mock):
         requests_mock.get(
-            m_url + f"/datasets/{dataset_id}/versions/1/editions",
+            f"{m_url}/datasets/{dataset_id}/versions/1/editions",
             text=json.dumps(edition_metadata_old),
         )
         with pytest.raises(main.IllegalFormatError):

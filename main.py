@@ -17,6 +17,9 @@ bucket = "ok-origo-dataplatform-{}".format(os.environ["STAGE"])
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
+session = boto3.Session()
+s3 = session.client("s3")
+
 
 def handler(event, context):
     if (
@@ -30,40 +33,42 @@ def handler(event, context):
     return handle_event(event)
 
 
+@xray_recorder.capture("get_objects")
+def gen_lists(base_key, query):
+    logger.info(f"Fetching data from {base_key}")
+
+    keys = []
+    if not query:
+        objects = s3.list_objects_v2(Bucket=bucket, Prefix=base_key)["Contents"]
+        keys = [obj["Key"] for obj in objects]
+    else:
+        pattern = re.compile("(\d\d)")
+        numbers = pattern.findall(query)
+        keys = [f"{base_key}{geography}.json" for geography in numbers]
+
+    if not keys:
+        logger.info("No files where found for the dataset")
+        return response(
+            422,
+            "Even though an edition exists, no files where found for the dataset",
+        )
+
+    return [
+        json.loads(s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8"))
+        for key in keys
+    ]
+
+
 @xray_recorder.capture("handle_event")
 def handle_event(event):
-    @xray_recorder.capture("get_objects")
-    def gen_lists():
-        keys = []
-        if not query:
-            objects = s3.list_objects_v2(Bucket=bucket, Prefix=base_key)["Contents"]
-            keys = [obj["Key"] for obj in objects]
-        else:
-            pattern = re.compile("(\d\d)")
-            numbers = pattern.findall(query)
-            keys = [f"{base_key}{geography}.json" for geography in numbers]
-        if not keys:
-            logger.info("No files where found for the dataset")
-            return response(
-                422,
-                "Even though an edition exists, no files where found for the dataset",
-            )
-
-        return [
-            json.loads(
-                s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")
-            )
-            for key in keys
-        ]
-
-    session = boto3.Session()
-    s3 = session.client("s3")
-
     dataset_id = event["pathParameters"]["dataset"]
     logger.info(f"Fetching Bydelsfakta data for {dataset_id}")
 
-    dataset = requests.get(f"{metadata_api}/datasets/{dataset_id}")
-    dataset = json.loads(dataset.text)
+    dataset_response = requests.get(f"{metadata_api}/datasets/{dataset_id}")
+    if dataset_response.status_code == 404:
+        return response(404, f"No dataset with id {dataset_id}")
+
+    dataset = json.loads(dataset_response.text)
     stage = dataset["processing_stage"]
     confidentiality = dataset["confidentiality"]
     parent_id = dataset.get("parent_id", None)
@@ -92,14 +97,9 @@ def handle_event(event):
     edition_id = edition["Id"].split("/")[-1]
 
     base_key = f"{stage}/{confidentiality}/{parent_id}/{dataset_id}/version={version}/edition={edition_id}/"
-    logger.info(f"Fetching data from {base_key}")
-    data = gen_lists()
+    data = gen_lists(base_key, query)
 
-    return {
-        "statusCode": 200,
-        "headers": {"Content-Type": "application/json"},
-        "body": json.dumps(data, ensure_ascii=False),
-    }
+    return response(200, data)
 
 
 @xray_recorder.capture("get_version")

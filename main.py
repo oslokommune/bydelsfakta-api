@@ -21,6 +21,10 @@ session = boto3.Session()
 s3 = session.client("s3")
 
 
+class S3FileNotFoundError(Exception):
+    pass
+
+
 def handler(event, context):
     if (
         event["requestContext"]["authorizer"]["principalId"]
@@ -47,10 +51,8 @@ def get_objects(base_key, query):
         keys = [f"{base_key}{geography}.json" for geography in numbers]
 
     if not keys:
-        logger.info("No files where found for the dataset")
-        return response(
-            422,
-            "Even though an edition exists, no files where found for the dataset",
+        raise S3FileNotFoundError(
+            "Even though an edition exists, no files were found for the dataset"
         )
 
     objects = []
@@ -59,12 +61,11 @@ def get_objects(base_key, query):
             obj = s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")
         except botocore.exceptions.ClientError as e:
             if e.response.get("Error", {}).get("Code") == "NoSuchKey":
-                logger.info(f"File {key} could not be found")
-                return response(422, f"File {key} could not be found")
+                raise S3FileNotFoundError(f"File {key} could not be found")
             raise
         objects.append(json.loads(obj))
 
-    return response(200, objects)
+    return objects
 
 
 @xray_recorder.capture("handle_event")
@@ -105,7 +106,11 @@ def handle_event(event):
     edition_id = edition["Id"].split("/")[-1]
 
     base_key = f"{stage}/{confidentiality}/{parent_id}/{dataset_id}/version={version}/edition={edition_id}/"
-    return get_objects(base_key, query)
+
+    try:
+        return response(200, get_objects(base_key, query))
+    except S3FileNotFoundError as e:
+        return response(422, str(e))
 
 
 @xray_recorder.capture("get_version")

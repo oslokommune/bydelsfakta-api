@@ -83,6 +83,25 @@ class Test:
         assert result["statusCode"] == 200
         assert json.loads(result["body"])[1] == {"number": "08"}
 
+    def test_main_handler_missing_files(self, requests_mock, s3_bucket):
+        requests_mock.get(
+            f"{m_url}/datasets/{dataset_id}", text=json.dumps(dataset_metadata)
+        )
+        requests_mock.get(
+            f"{m_url}/datasets/{dataset_id}/versions",
+            text=json.dumps(version_metadata),
+        )
+        requests_mock.get(
+            f"{m_url}/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions",
+            text=json.dumps(edition_metadata),
+        )
+        result = main.handler(event, {})
+        assert result["statusCode"] == 422
+        base_key = urllib.parse.unquote_plus(self.base_key)
+        assert (
+            json.loads(result["body"]) == f"File {base_key}02.json could not be found"
+        )
+
     def test_main_handler_on_non_existing_dataset(self, requests_mock):
         requests_mock.get(f"{m_url}/datasets/{dataset_id}", status_code=404)
         result = main.handler(event, {})

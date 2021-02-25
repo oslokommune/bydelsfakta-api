@@ -1,12 +1,12 @@
 import json
+import logging
 import os
 import re
 
 import boto3
+import botocore
 import requests
-import logging
-from aws_xray_sdk.core import xray_recorder
-from aws_xray_sdk.core import patch
+from aws_xray_sdk.core import patch, xray_recorder
 
 patch(["boto3"])
 patch(["requests"])
@@ -19,6 +19,10 @@ logger.setLevel(logging.INFO)
 
 session = boto3.Session()
 s3 = session.client("s3")
+
+
+class S3FileNotFoundError(Exception):
+    pass
 
 
 def handler(event, context):
@@ -34,7 +38,7 @@ def handler(event, context):
 
 
 @xray_recorder.capture("get_objects")
-def gen_lists(base_key, query):
+def get_objects(base_key, query):
     logger.info(f"Fetching data from {base_key}")
 
     keys = []
@@ -47,16 +51,21 @@ def gen_lists(base_key, query):
         keys = [f"{base_key}{geography}.json" for geography in numbers]
 
     if not keys:
-        logger.info("No files where found for the dataset")
-        return response(
-            422,
-            "Even though an edition exists, no files where found for the dataset",
+        raise S3FileNotFoundError(
+            "Even though an edition exists, no files were found for the dataset"
         )
 
-    return [
-        json.loads(s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8"))
-        for key in keys
-    ]
+    objects = []
+    for key in keys:
+        try:
+            obj = s3.get_object(Bucket=bucket, Key=key)["Body"].read().decode("utf-8")
+        except botocore.exceptions.ClientError as e:
+            if e.response.get("Error", {}).get("Code") == "NoSuchKey":
+                raise S3FileNotFoundError(f"File {key} could not be found")
+            raise
+        objects.append(json.loads(obj))
+
+    return objects
 
 
 @xray_recorder.capture("handle_event")
@@ -97,9 +106,11 @@ def handle_event(event):
     edition_id = edition["Id"].split("/")[-1]
 
     base_key = f"{stage}/{confidentiality}/{parent_id}/{dataset_id}/version={version}/edition={edition_id}/"
-    data = gen_lists(base_key, query)
 
-    return response(200, data)
+    try:
+        return response(200, get_objects(base_key, query))
+    except S3FileNotFoundError as e:
+        return response(422, str(e))
 
 
 @xray_recorder.capture("get_version")

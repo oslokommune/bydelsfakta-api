@@ -1,6 +1,4 @@
 handler: main.handler
-layers:
-  - { Ref: PythonRequirementsLambdaLayer }
 environment:
   STAGE: ${self:provider.stage}
 events:

@@ -46,7 +46,7 @@ def get_objects(base_key, query):
         objects = s3.list_objects_v2(Bucket=bucket, Prefix=base_key)["Contents"]
         keys = [obj["Key"] for obj in objects]
     else:
-        pattern = re.compile("(\d\d)")
+        pattern = re.compile(r"(\d\d)")
         numbers = pattern.findall(query)
         keys = [f"{base_key}{geography}.json" for geography in numbers]
 

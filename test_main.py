@@ -11,7 +11,7 @@ stage = "test"
 m_url = "https://metadata.com/{}".format(stage)
 os.environ["METADATA_API_URL"] = m_url
 os.environ["STAGE"] = stage
-import main
+import main  # noqa: E402
 
 parent_id = "bydelsfakta"
 dataset_id = "boligpriser"

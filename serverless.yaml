@@ -60,7 +60,6 @@ custom:
       - ${file(./serverless/models/awsError.yaml)}
   pythonRequirements:
     dockerizePip: non-linux
-    layer: true
     slim: true
     usePoetry: false
   exportGitVariables: false

@@ -9,12 +9,11 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - uses: dalezak/github-commit-to-trello-card@main
+      - uses: dalezak/github-commit-to-trello-card@e6a5ecb2a9c9ea5ac56234280324b2693bccbb8e
         with:
           trello-api-key: ${{ secrets.TRELLO_KEY }}
           trello-auth-token: ${{ secrets.TRELLO_TOKEN }}
           trello-board-id: ${{ secrets.TRELLO_BOARD }}
           trello-card-action: "Attachment"
-          trello-list-name-commit: "In progress"
-          trello-list-name-pr-open: "In review"
-          trello-list-name-pr-closed: "Done"
+          trello-list-name-commit: "Under arbeid"
+          trello-list-name-pr-open: "Review / Test"

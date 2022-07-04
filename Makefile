@@ -28,44 +28,38 @@ upgrade-deps: $(BUILD_VENV)/bin/pip-compile
 	$(BUILD_VENV)/bin/pip-compile -U
 
 .PHONY: deploy
-deploy: init format test login-dev
+deploy: login-dev init format test
+	@echo "\nDeploying to stage: dev\n"
 	sls deploy --stage dev --aws-profile $(.DEV_PROFILE)
 
 .PHONY: deploy-prod
-deploy-prod: init format is-git-clean test login-prod
+deploy-prod: login-prod init format is-git-clean test
 	sls deploy --stage prod --aws-profile $(.PROD_PROFILE)
 
-ifeq ($(MAKECMDGOALS),undeploy)
-ifndef STAGE
-$(error STAGE is not set)
-endif
-ifeq ($(STAGE),dev)
-$(error Please do not undeploy dev)
-endif
-endif
 .PHONY: undeploy
-undeploy: login-dev
-	@echo "\nUndeploying stage: $(STAGE)\n"
-	sls remove --stage $(STAGE) --aws-profile $(.DEV_PROFILE)
+undeploy: login-dev init
+	@echo "\nUndeploying stage: dev\n"
+	sls remove --stage dev --aws-profile $(.DEV_PROFILE)
+
+.PHONY: undeploy-prod
+undeploy-prod: login-prod init
+	@echo "\nUndeploying stage: prod\n"
+	sls remove --stage prod --aws-profile $(.PROD_PROFILE)
 
 .PHONY: login-dev
-login-dev:
-ifndef OKDATA_AWS_ROLE_DEV
-	$(error OKDATA_AWS_ROLE_DEV is not set)
-endif
-	saml2aws login --role=$(OKDATA_AWS_ROLE_DEV) --profile=$(.DEV_PROFILE)
+login-dev: init
+	aws sts get-caller-identity --profile $(.DEV_PROFILE) || aws sso login --profile=$(.DEV_PROFILE)
+	./node_modules/.bin/ssocreds -p $(.DEV_PROFILE) # https://github.com/serverless/serverless/issues/7567
 
 .PHONY: login-prod
-login-prod:
-ifndef OKDATA_AWS_ROLE_PROD
-	$(error OKDATA_AWS_ROLE_PROD is not set)
-endif
-	saml2aws login --role=$(OKDATA_AWS_ROLE_PROD) --profile=$(.PROD_PROFILE)
+login-prod: init
+	aws sts get-caller-identity --profile $(.PROD_PROFILE) || aws sso login --profile=$(.PROD_PROFILE)
+	./node_modules/.bin/ssocreds -p $(.PROD_PROFILE) # https://github.com/serverless/serverless/issues/7567
 
 .PHONY: is-git-clean
 is-git-clean:
 	@status=$$(git fetch origin && git status -s -b) ;\
-	if test "$${status}" != "## master...origin/master"; then \
+	if test "$${status}" != "## main...origin/main"; then \
 		echo; \
 		echo Git working directory is dirty, aborting >&2; \
 		false; \

@@ -3,11 +3,11 @@
   "description": "",
   "version": "0.1.0",
   "devDependencies": {
-    "serverless": "^2.10.0",
-    "serverless-aws-documentation": "^1.1.0",
-    "serverless-plugin-git-variables": "^3.3.2",
-    "serverless-pseudo-parameters": "^2.4.0",
-    "serverless-python-requirements": "^5.0.0",
-    "serverless-scriptable-plugin": "^1.0.1"
+    "@kakkuk/serverless-aws-apigateway-documentation": "1.1.12",
+    "serverless": "^3.14.0",
+    "serverless-plugin-git-variables": "^5.2.0",
+    "serverless-prune-plugin": "^2.0.1",
+    "serverless-python-requirements": "^5.4.0",
+    "serverless-scriptable-plugin": "^1.2.2"
   }
 }

@@ -1,6 +1,6 @@
-service: bydelsfakta-api
+frameworkVersion: ">=3.14.0 <4.0.0"
 
-frameworkVersion: ">=2.10.0 <3.0.0"
+service: bydelsfakta-api
 
 provider:
   name: aws
@@ -16,28 +16,28 @@ provider:
     METADATA_API_URL: ${ssm:/dataplatform/shared/api-gateway-url}/metadata
     STAGE: ${self:provider.stage}
     GIT_REV: ${git:branch}:${git:sha1}
+  logRetentionInDays: 90
   tracing:
-    lambda: true
     apiGateway: true
-  apiGateway:
-    minimumCompressionSize: 1024
-  rolePermissionsBoundary: "arn:aws:iam::#{AWS::AccountId}:policy/oslokommune/oslokommune-boundary"
-  iamManagedPolicies:
-    - "arn:aws:iam::aws:policy/AWSXrayDaemonWriteAccess"
-    - 'arn:aws:iam::#{AWS::AccountId}:policy/bydelsfakta-api-policy'
+    lambda: true
+  iam:
+    role:
+      permissionsBoundary: "arn:aws:iam::${aws:accountId}:policy/oslokommune/oslokommune-boundary"
+      managedPolicies:
+        - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
+        - 'arn:aws:iam::${aws:accountId}:policy/bydelsfakta-api-policy'
   tags:
     GIT_REV: ${git:branch}:${git:sha1}
 
 plugins:
-  - serverless-aws-documentation
-  - serverless-python-requirements
-  - serverless-pseudo-parameters
+  - "@kakkuk/serverless-aws-apigateway-documentation"
   - serverless-plugin-git-variables
+  - serverless-prune-plugin
+  - serverless-python-requirements
 
 package:
-  exclude:
-    - "./**"
-  include:
+  patterns:
+    - '!**/*'
     - main.py
 
 functions:
@@ -58,6 +58,9 @@ custom:
     models:
       - ${file(./serverless/models/Response.yaml)}
       - ${file(./serverless/models/awsError.yaml)}
+  prune:
+    automatic: true
+    number: 3
   pythonRequirements:
     dockerizePip: non-linux
     slim: true

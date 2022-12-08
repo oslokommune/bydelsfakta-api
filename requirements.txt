@@ -6,7 +6,7 @@
 #
 aws-xray-sdk==2.6.0       # via bydelsfakta-api (setup.py)
 botocore==1.19.44         # via aws-xray-sdk
-certifi==2020.12.5        # via requests
+certifi==2022.12.7        # via requests
 chardet==4.0.0            # via requests
 future==0.18.2            # via aws-xray-sdk
 idna==2.10                # via requests

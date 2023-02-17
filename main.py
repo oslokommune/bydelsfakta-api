@@ -92,13 +92,6 @@ def handle_event(event):
     )
     parent_id = dataset.get("parent_id", None)
 
-    if not parent_id:
-        logger.info(f"{dataset_id} is missing parent_id")
-        return response(
-            422,
-            "Was expecting to find a parent_id on the requested resource but was None",
-        )
-
     query = []
     if event["queryStringParameters"] and "geography" in event["queryStringParameters"]:
         query = event["queryStringParameters"]["geography"]
@@ -115,7 +108,17 @@ def handle_event(event):
 
     edition_id = edition["Id"].split("/")[-1]
 
-    base_key = f"{stage}/{confidentiality}/{parent_id}/{dataset_id}/version={version}/edition={edition_id}/"
+    base_key = "/".join(
+        [
+            stage,
+            confidentiality,
+            *([parent_id] if parent_id else []),
+            dataset_id,
+            f"version={version}",
+            f"edition={edition_id}",
+            "",
+        ]
+    )
 
     try:
         return response(200, get_objects(base_key, query))

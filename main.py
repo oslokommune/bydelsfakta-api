@@ -20,6 +20,12 @@ logger.setLevel(logging.INFO)
 session = boto3.Session()
 s3 = session.client("s3")
 
+CONFIDENTIALITY_MAP = {
+    "public": "green",
+    "restricted": "yellow",
+    "non-public": "red",
+}
+
 
 class S3FileNotFoundError(Exception):
     pass
@@ -78,8 +84,12 @@ def handle_event(event):
         return response(404, f"No dataset with id {dataset_id}")
 
     dataset = json.loads(dataset_response.text)
-    stage = dataset["processing_stage"]
-    confidentiality = dataset["confidentiality"]
+    stage = dataset.get("processing_stage", "processed")
+    confidentiality = (
+        CONFIDENTIALITY_MAP[dataset["accessRights"]]
+        if "accessRights" in dataset
+        else dataset["confidentiality"]
+    )
     parent_id = dataset.get("parent_id", None)
 
     if not parent_id:

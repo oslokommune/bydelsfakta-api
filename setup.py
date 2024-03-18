@@ -15,6 +15,7 @@ setuptools.setup(
     packages=setuptools.find_packages(),
     install_requires=[
         "aws_xray_sdk>=2.7",
+        "boto3",
         "requests",
     ],
 )

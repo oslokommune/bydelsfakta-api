@@ -1,10 +1,10 @@
 {
   "name": "bydelsfakta-api",
   "description": "",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "devDependencies": {
     "@kakkuk/serverless-aws-apigateway-documentation": "1.1.12",
-    "serverless": "^3.14.0",
+    "serverless": "^3.38.0",
     "serverless-better-credentials": "^1.2.1",
     "serverless-plugin-git-variables": "^5.2.0",
     "serverless-prune-plugin": "^2.0.1",

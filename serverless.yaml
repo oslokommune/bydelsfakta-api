@@ -1,10 +1,10 @@
-frameworkVersion: ">=3.14.0 <4.0.0"
+frameworkVersion: ">=3.38.0 <4.0.0"
 
 service: bydelsfakta-api
 
 provider:
   name: aws
-  runtime: python3.9
+  runtime: python3.11
   region: ${opt:region, 'eu-west-1'}
   stage: ${opt:stage, 'dev'}
   timeout: 29
@@ -39,7 +39,7 @@ plugins:
 package:
   patterns:
     - '!**/*'
-    - main.py
+    - bydelsfakta_api/*.py
 
 functions:
   get_dataset: ${file(serverless/functions/get_dataset.yaml)}

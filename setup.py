@@ -5,13 +5,13 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="bydelsfakta-api",
-    version="0.0.1",
+    version="1.0.0",
     author="Origo Dataplattform",
     author_email="dataplattform@oslo.kommune.no",
-    description="Lambda function fetch bydelsfaktas",
+    description="Lambda function for serving Bydelsfakta datasets",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.oslo.kommune.no/origodigi/bydelsfakta-api",
+    url="https://github.com/oslokommune/bydelsfakta-api",
     packages=setuptools.find_packages(),
     install_requires=[
         "aws_xray_sdk>=2.7",

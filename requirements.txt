@@ -4,36 +4,36 @@
 #
 #    pip-compile
 #
-aws-xray-sdk==2.12.1
+aws-xray-sdk==2.13.1
     # via bydelsfakta-api (setup.py)
-boto3==1.34.64
+boto3==1.34.115
     # via bydelsfakta-api (setup.py)
-botocore==1.34.64
+botocore==1.34.115
     # via
     #   aws-xray-sdk
     #   boto3
     #   s3transfer
-certifi==2023.7.22
+certifi==2024.2.2
     # via requests
 charset-normalizer==3.3.2
     # via requests
 idna==3.7
     # via requests
-jmespath==0.10.0
+jmespath==1.0.1
     # via
     #   boto3
     #   botocore
-python-dateutil==2.8.1
+python-dateutil==2.9.0.post0
     # via botocore
-requests==2.32.0
+requests==2.32.3
     # via bydelsfakta-api (setup.py)
 s3transfer==0.10.1
     # via boto3
-six==1.15.0
+six==1.16.0
     # via python-dateutil
-urllib3==1.26.18
+urllib3==2.2.1
     # via
     #   botocore
     #   requests
-wrapt==1.12.1
+wrapt==1.16.0
     # via aws-xray-sdk

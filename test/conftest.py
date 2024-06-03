@@ -1,3 +1,4 @@
+import os
 import urllib
 
 import boto3
@@ -19,7 +20,10 @@ def s3_client():
 @pytest.fixture
 def s3_bucket(s3_client):
     bucket = "ok-origo-dataplatform-test"
-    s3_client.create_bucket(Bucket=bucket)
+    s3_client.create_bucket(
+        Bucket=bucket,
+        CreateBucketConfiguration={"LocationConstraint": os.environ["AWS_REGION"]},
+    )
     return s3_client, bucket
 
 

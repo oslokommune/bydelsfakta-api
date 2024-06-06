@@ -1,4 +1,4 @@
-handler: main.handler
+handler: bydelsfakta_api.handler.handler
 environment:
   STAGE: ${self:provider.stage}
 events:

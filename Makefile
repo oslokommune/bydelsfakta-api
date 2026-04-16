@@ -1,5 +1,5 @@
-.DEV_PROFILE := okdata-dev
-.PROD_PROFILE := okdata-prod
+.DEV_PROFILE := databrikker-dev
+.PROD_PROFILE := databrikker-prod
 
 GLOBAL_PY := python3
 BUILD_VENV ?= .build_venv
@@ -62,20 +62,6 @@ is-git-clean:
 		echo Git working directory is dirty, aborting >&2; \
 		false; \
 	fi
-
-.PHONY: update-ssm-prod
-update-ssm-prod:
-	url=$$(sls info -s prod --verbose | grep ServiceEndpoint | cut -d' ' -f2) &&\
-	aws --region eu-west-1 ssm put-parameter --overwrite \
-	--profile=$(.PROD_PROFILE) \
-	--cli-input-json "{\"Type\": \"String\", \"Name\": \"/dataplatform/bydelsfakta-api/url\", \"Value\": \"$$url\"}"
-
-.PHONY: update-ssm-dev
-update-ssm-dev: login-dev
-	url=$$(sls info -s dev --verbose | grep ServiceEndpoint | cut -d' ' -f2) &&\
-	aws --region eu-west-1 ssm put-parameter --overwrite \
-	--profile=$(.DEV_PROFILE) \
-	--cli-input-json "{\"Type\": \"String\", \"Name\": \"/dataplatform/bydelsfakta-api/url\", \"Value\": \"$$url\"}"
 
 ###
 # Python build dependencies

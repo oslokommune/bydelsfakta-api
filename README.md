@@ -1,10 +1,7 @@
-Bydelsfakta-api
-=============
+# Bydelsfakta API
 
-Fetches the latest edition of given dataset.
-
-
-The api fetches bydelsfakta data based on geography.
+Simple Lambda API for fetching the newest Bydelsfakta data from S3 based on
+geography.
 
 ## Setup
 
@@ -21,16 +18,11 @@ Code is formatted using [black](https://pypi.org/project/black/): `make format`
 
 Tests are run using [tox](https://pypi.org/project/tox/): `make test`
 
-For tests and linting we use [pytest](https://pypi.org/project/pytest/), [flake8](https://pypi.org/project/flake8/) and [black](https://pypi.org/project/black/).
+For tests and linting we use [pytest](https://pypi.org/project/pytest/),
+[flake8](https://pypi.org/project/flake8/) and
+[black](https://pypi.org/project/black/).
 
 ## Deploy
 
-Deploy to dev is automatic via GitHub Actions, while deploy to prod can be triggered with GitHub Actions via dispatch. You can alternatively deploy from local machine with: `make deploy` or `make deploy-prod`.
-
-## Input
-
-Optional parameter geography, e.g. `geography=01`
-
-## Output
-
-The function returns the data from a bydelsfakta.
+Example GitHub Actions for deploying to dev and prod on push to `main` is
+included in `.github/workflows`.

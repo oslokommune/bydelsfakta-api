@@ -3,72 +3,29 @@ import os
 
 from bydelsfakta_api.handler import handler
 
-metadata_api_url = os.environ["METADATA_API_URL"]
 dataset_id = "boligpriser"
+s3_prefix = os.environ["S3_PREFIX"]
 
 
-def test_handler(
-    requests_mock,
-    s3_bucket,
-    event,
-    dataset_metadata,
-    version_metadata,
-    edition_metadata,
-    s3_prefix,
-):
+def test_handler(s3_bucket, event):
     for i in range(0, 19):
-        file_numer = str(i).zfill(2)
-        print(f"{s3_prefix}{file_numer}.json")
+        file_number = str(i).zfill(2)
         s3_bucket[0].put_object(
             Bucket=s3_bucket[1],
-            Key=f"{s3_prefix}{file_numer}.json",
-            Body=json.dumps({"number": file_numer}),
+            Key=f"{s3_prefix}{dataset_id}/{file_number}.json",
+            Body=json.dumps({"number": file_number}),
         )
-    requests_mock.get(
-        f"{metadata_api_url}/datasets/{dataset_id}",
-        text=json.dumps(dataset_metadata),
-    )
-    requests_mock.get(
-        f"{metadata_api_url}/datasets/{dataset_id}/versions",
-        text=json.dumps(version_metadata),
-    )
-    requests_mock.get(
-        f"{metadata_api_url}/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions",
-        text=json.dumps(edition_metadata),
-    )
     result = handler(event, {})
     assert result["statusCode"] == 200
     assert json.loads(result["body"])[1] == {"number": "08"}
 
 
-def test_handler_missing_files(
-    requests_mock,
-    s3_bucket,
-    event,
-    dataset_metadata,
-    version_metadata,
-    edition_metadata,
-    s3_prefix,
-):
-    requests_mock.get(
-        f"{metadata_api_url}/datasets/{dataset_id}",
-        text=json.dumps(dataset_metadata),
-    )
-    requests_mock.get(
-        f"{metadata_api_url}/datasets/{dataset_id}/versions",
-        text=json.dumps(version_metadata),
-    )
-    requests_mock.get(
-        f"{metadata_api_url}/datasets/{dataset_id}/versions/{version_metadata[0]['version']}/editions",
-        text=json.dumps(edition_metadata),
-    )
-    result = handler(event, {})
-    assert result["statusCode"] == 422
-    assert json.loads(result["body"]) == f"File {s3_prefix}02.json could not be found"
-
-
-def test_handler_on_non_existing_dataset(requests_mock, event):
-    requests_mock.get(f"{metadata_api_url}/datasets/{dataset_id}", status_code=404)
+def test_handler_missing_files(s3_bucket, event):
     result = handler(event, {})
     assert result["statusCode"] == 404
-    assert json.loads(result["body"]) == f"No dataset with id {dataset_id}"
+
+
+def test_handler_no_geography(s3_bucket, event):
+    event["queryStringParameters"] = None
+    result = handler(event, {})
+    assert result["statusCode"] == 400

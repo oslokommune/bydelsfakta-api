@@ -1,6 +1,4 @@
 handler: bydelsfakta_api.handler.handler
-environment:
-  STAGE: ${self:provider.stage}
 events:
 - http:
     path: /{dataset}
@@ -13,4 +11,3 @@ events:
         paths:
           dataset: true
     documentation: ${file(serverless/documentation/get_dataset.yaml)}
-    authorizer: ${file(serverless/kc-authorizer.yaml)}

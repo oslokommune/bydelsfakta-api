@@ -8,24 +8,46 @@ provider:
   region: ${opt:region, 'eu-west-1'}
   stage: ${opt:stage, 'dev'}
   timeout: 29
-  deploymentBucket:
-    name: ok-origo-dataplatform-config-${self:provider.stage}
-    serverSideEncryption: AES256
-  deploymentPrefix: deploy
   environment:
-    METADATA_API_URL: ${ssm:/dataplatform/shared/api-gateway-url}/metadata
-    STAGE: ${self:provider.stage}
+    # The gold-output Unity Catalog volume's bucket, prefix, and KMS key are
+    # managed by padda-iac (workspace-bydelsfakta{,-prod}/bydelsfakta_api_config.tf)
+    # and exposed through SSM. The Lambda reads from this volume's underlying
+    # S3 location.
+    S3_BUCKET: ${ssm:/padda-${self:provider.stage}/bydelsfakta/gold-volume/bucket}
+    S3_PREFIX: ${ssm:/padda-${self:provider.stage}/bydelsfakta/gold-volume/prefix}
     GIT_REV: ${git:branch}:${git:sha1}
   logRetentionInDays: 90
   tracing:
     apiGateway: true
     lambda: true
+  stackTags:
+    # Required by the deploy role's tag-gated API Gateway permissions in
+    # padda-iac (modules/bydelsfakta_api_deploy). CloudFormation propagates
+    # stack tags to created resources, satisfying the IAM condition.
+    Service: bydelsfakta-api
   iam:
     role:
-      permissionsBoundary: "arn:aws:iam::${aws:accountId}:policy/oslokommune/oslokommune-boundary"
+      # Required by the deploy role: any Lambda execution role created by this
+      # stack must attach this boundary, capping runtime privileges.
+      permissionsBoundary: ${ssm:/padda-${self:provider.stage}/bydelsfakta/lambda-permissions-boundary-arn}
       managedPolicies:
         - 'arn:aws:iam::aws:policy/AWSXRayDaemonWriteAccess'
-        - 'arn:aws:iam::${aws:accountId}:policy/bydelsfakta-api-policy'
+      statements:
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+          Resource:
+            - "arn:aws:s3:::${self:provider.environment.S3_BUCKET}/*"
+        - Effect: Allow
+          Action:
+            - s3:ListBucket
+          Resource:
+            - "arn:aws:s3:::${self:provider.environment.S3_BUCKET}"
+        - Effect: Allow
+          Action:
+            - kms:Decrypt
+          Resource:
+            - ${ssm:/padda-${self:provider.stage}/bydelsfakta/gold-volume/kms-key-arn}
   tags:
     GIT_REV: ${git:branch}:${git:sha1}
 

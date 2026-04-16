@@ -6,8 +6,8 @@ with open("README.md", "r") as fh:
 setuptools.setup(
     name="bydelsfakta-api",
     version="1.0.0",
-    author="Origo Dataplattform",
-    author_email="dataplattform@oslo.kommune.no",
+    author="Oslo kommune",
+    author_email="dataspeilet@oslo.kommune.no",
     description="Lambda function for serving Bydelsfakta datasets",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -16,6 +16,5 @@ setuptools.setup(
     install_requires=[
         "aws_xray_sdk>=2.7",
         "boto3",
-        "requests",
     ],
 )

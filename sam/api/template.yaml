@@ -36,7 +36,7 @@ Parameters:
 
 Globals:
   Function:
-    Runtime: python3.11
+    Runtime: python3.14
     Architectures: [arm64]
     Timeout: 29
 

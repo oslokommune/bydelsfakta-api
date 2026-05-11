@@ -5,11 +5,6 @@ import re
 
 import boto3
 import botocore
-from aws_xray_sdk.core import patch, xray_recorder
-
-from bydelsfakta_api.exceptions import S3FileNotFoundError
-
-patch(["boto3"])
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -21,7 +16,10 @@ bucket = os.environ["S3_BUCKET"]
 prefix = os.environ["S3_PREFIX"]
 
 
-@xray_recorder.capture("get_objects")
+class S3FileNotFoundError(Exception):
+    pass
+
+
 def get_objects(dataset, query):
     base_key = f"{prefix}{dataset}/"
     logger.info(f"Fetching data from {base_key}")

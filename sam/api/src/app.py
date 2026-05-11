@@ -1,21 +1,13 @@
 import json
 import logging
 
-from aws_xray_sdk.core import xray_recorder
-
-from bydelsfakta_api.service import get_objects
-from bydelsfakta_api.exceptions import S3FileNotFoundError
+from service import S3FileNotFoundError, get_objects
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def handler(event, context):
-    return _handle_event(event)
-
-
-@xray_recorder.capture("handle_event")
-def _handle_event(event):
+def lambda_handler(event, context):
     dataset = event["pathParameters"]["dataset"]
     logger.info(f"Fetching Bydelsfakta data for {dataset}")
 

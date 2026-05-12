@@ -1,13 +1,9 @@
 import json
-import logging
 import os
 import re
 
 import boto3
 import botocore
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 session = boto3.Session()
 s3 = session.client("s3")
@@ -22,8 +18,6 @@ class S3FileNotFoundError(Exception):
 
 def get_objects(dataset, query):
     base_key = f"{prefix}{dataset}/"
-    logger.info(f"Fetching data from {base_key}")
-
     pattern = re.compile(r"(\d\d)")
     numbers = pattern.findall(query)
     keys = [f"{base_key}{geography}.json" for geography in numbers]

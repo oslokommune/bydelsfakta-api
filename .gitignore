@@ -147,5 +147,4 @@ fabric.properties
 .idea/httpRequests
 
 #Custom
-node_modules/
-.serverless/
+.aws-sam/

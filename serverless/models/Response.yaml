@@ -1,7 +1,0 @@
-name: Response
-description: A response containing json data
-contentType: application/json
-schema:
-  type: array
-  items:
-    type: object

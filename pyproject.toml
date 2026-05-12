@@ -1,13 +1,11 @@
 [tool.black]
-target-version = ['py311']
+target-version = ['py314']
 # Keep exclude in sync with flake8 config in tox.ini
 exclude = '''
 /(
       \.git
     | \.tox
-    | node_modules
     | __pycache__
-    | libs
     | \*\.pyc
     | \.cache
     | \.eggs
@@ -16,6 +14,9 @@ exclude = '''
     | env
     | venv
     | \..*venv
-    | \.serverless
+    | \.aws-sam
 )/
 '''
+
+[tool.pytest.ini_options]
+pythonpath = ["sam/api/src"]

@@ -15,27 +15,55 @@ permissions:
 jobs:
   deploy-dev:
     runs-on: ubuntu-latest
+    env:
+      AWS_REGION: eu-west-1
+      WORKSPACE: bydelsfakta
+      SSM_ENV: padda-dev
+      SAM_DIR: sam/api
+      SAM_CLI_TELEMETRY: '0'
     steps:
-      - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11 # v4.1.1
-      - name: Set up Python 3.11
-        uses: actions/setup-python@0a5c61591373683505ea898e09a3ea4f39ef2b9c # v5.0.0
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - name: Set up Python 3.14
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
         with:
-          python-version: '3.11'
+          python-version: '3.14'
       - name: Install Python dependencies
         run: pip install tox
       - name: Test with tox
         run: tox -e py,flake8,black
-      - uses: actions/setup-node@b39b52d1213e96004bfcb1c61a8a6fa8ab84f3e8 # v4.0.1
+      - uses: aws-actions/setup-sam@89ddb14d60e682855e3fea4be85b3c56485de310 # v3
         with:
-          node-version: '18.x'
-      - name: Install NPM dependencies
-        run: npm install
+          use-installer: true
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@a03048d87541d1d9fcf2ecf528a4a65ba9bd7838 # v5.0.0
+        uses: aws-actions/configure-aws-credentials@d979d5b3a71173a29b74b5b88418bfda9437d885 # v6.1.1
         with:
-          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_DEV }}:role/github-deploy
-          aws-region: eu-west-1
+          role-to-assume: arn:aws:iam::${{ secrets.AWS_ACCOUNT_DEV }}:role/bydelsfakta-api-deploy
+          aws-region: ${{ env.AWS_REGION }}
       - name: Sts GetCallerIdentity
         run: aws sts get-caller-identity
-      - name: Deploy Lambda functions
-        run: ./node_modules/.bin/sls deploy -s dev
+      - name: Resolve deploy parameters from SSM
+        id: ssm
+        run: |
+          echo "bucket=$(aws ssm get-parameter --name /${SSM_ENV}/bydelsfakta/gold-volume/bucket --query Parameter.Value --output text)" >> $GITHUB_OUTPUT
+          echo "prefix=$(aws ssm get-parameter --name /${SSM_ENV}/bydelsfakta/gold-volume/prefix --query Parameter.Value --output text)" >> $GITHUB_OUTPUT
+          echo "kms_key_arn=$(aws ssm get-parameter --name /${SSM_ENV}/bydelsfakta/gold-volume/kms-key-arn --query Parameter.Value --output text)" >> $GITHUB_OUTPUT
+          echo "boundary_arn=$(aws ssm get-parameter --name /${SSM_ENV}/bydelsfakta/lambda-permissions-boundary-arn --query Parameter.Value --output text)" >> $GITHUB_OUTPUT
+          echo "cfn_role_arn=$(aws ssm get-parameter --name /${SSM_ENV}/bydelsfakta/sam/cfn-role-arn --query Parameter.Value --output text)" >> $GITHUB_OUTPUT
+          echo "artifacts_bucket=$(aws ssm get-parameter --name /${SSM_ENV}/bydelsfakta/sam/artifacts-bucket --query Parameter.Value --output text)" >> $GITHUB_OUTPUT
+      - name: SAM build
+        run: sam build
+        working-directory: ${{ env.SAM_DIR }}
+      - name: SAM deploy
+        run: |
+          sam deploy \
+            --config-env dev \
+            --s3-bucket "${{ steps.ssm.outputs.artifacts_bucket }}" \
+            --role-arn "${{ steps.ssm.outputs.cfn_role_arn }}" \
+            --parameter-overrides \
+              WorkspaceName="$WORKSPACE" \
+              S3Bucket="${{ steps.ssm.outputs.bucket }}" \
+              S3Prefix="${{ steps.ssm.outputs.prefix }}" \
+              KmsKeyArn="${{ steps.ssm.outputs.kms_key_arn }}" \
+              PermissionsBoundaryArn="${{ steps.ssm.outputs.boundary_arn }}" \
+              GitRev="${GITHUB_REF_NAME}:${GITHUB_SHA::7}"
+        working-directory: ${{ env.SAM_DIR }}

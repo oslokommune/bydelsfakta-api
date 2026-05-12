@@ -1,5 +1,0 @@
-name: awsError
-description: An error response
-contentType: application/json
-schema:
-  type: string

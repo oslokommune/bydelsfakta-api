@@ -1,0 +1,119 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  Public API Gateway + Lambda that serves bydelsfakta JSON datasets read
+  directly from the gold_output Unity Catalog volume's underlying S3 bucket.
+
+Parameters:
+  WorkspaceName:
+    Type: String
+    Description: >
+      padda-iac workspace name (e.g. `bydelsfakta`, `bydelsfakta-prod`).
+      Used as the prefix for the Lambda function and execution role so they
+      match what the workspace's CloudFormation service role is allowed to
+      create.
+
+  PermissionsBoundaryArn:
+    Type: String
+    Description: ARN of the permission boundary to attach to the Lambda execution role.
+
+  S3Bucket:
+    Type: String
+    Description: Name of the S3 bucket backing the gold_output UC volume.
+
+  S3Prefix:
+    Type: String
+    Description: Key prefix inside the bucket where the volume's data lives. Must end with a slash.
+
+  KmsKeyArn:
+    Type: String
+    Description: ARN of the KMS key used to encrypt the gold_output volume.
+
+  GitRev:
+    Type: String
+    Default: ""
+    Description: Git revision (branch:sha1) baked into the Lambda environment for traceability.
+
+Globals:
+  Function:
+    Runtime: python3.14
+    Architectures: [arm64]
+    Timeout: 29
+
+Resources:
+  Api:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: !Sub "${WorkspaceName}-api"
+      StageName: v1
+      Cors:
+        AllowMethods: "'GET,OPTIONS'"
+        AllowHeaders: "'Content-Type'"
+        AllowOrigin: "'*'"
+
+  ApiFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "${WorkspaceName}_api"
+      CodeUri: src/
+      Handler: app.lambda_handler
+      Role: !GetAtt ApiFunctionRole.Arn
+      Environment:
+        Variables:
+          S3_BUCKET: !Ref S3Bucket
+          S3_PREFIX: !Ref S3Prefix
+          GIT_REV: !Ref GitRev
+      Events:
+        GetDataset:
+          Type: Api
+          Properties:
+            RestApiId: !Ref Api
+            Path: /{dataset}
+            Method: get
+
+  ApiFunctionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${WorkspaceName}_api"
+      RetentionInDays: 90
+
+  ApiFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${WorkspaceName}-sam-api-role"
+      PermissionsBoundary: !Ref PermissionsBoundaryArn
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+      Policies:
+        - PolicyName: GoldVolumeRead
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: !Sub "arn:aws:s3:::${S3Bucket}/*"
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${S3Bucket}"
+              - Effect: Allow
+                Action:
+                  - kms:Decrypt
+                Resource: !Ref KmsKeyArn
+
+Outputs:
+  ApiEndpoint:
+    Description: Base URL of the deployed API Gateway stage.
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com/v1"
+
+  ApiFunctionArn:
+    Description: ARN of the Lambda function.
+    Value: !GetAtt ApiFunction.Arn

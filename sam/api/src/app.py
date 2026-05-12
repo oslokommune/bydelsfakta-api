@@ -1,15 +1,10 @@
 import json
-import logging
 
 from service import S3FileNotFoundError, get_objects
-
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
 
 
 def lambda_handler(event, context):
     dataset = event["pathParameters"]["dataset"]
-    logger.info(f"Fetching Bydelsfakta data for {dataset}")
 
     if (
         not event["queryStringParameters"]
